@@ -18,6 +18,7 @@ use Net::Amazon::IAM::Error;
 use Net::Amazon::IAM::Errors;
 use Net::Amazon::IAM::User;
 use Net::Amazon::IAM::Policy;
+use Net::Amazon::IAM::Policies;
 use Net::Amazon::IAM::UserPolicy;
 use Net::Amazon::IAM::Group;
 use Net::Amazon::IAM::AccessKey;
@@ -799,13 +800,89 @@ sub delete_policy {
    }
 }
 
+=head2 list_policies(%params)
+
+Lists all the managed policies that are available to your account, 
+including your own customer managed policies and all AWS managed policies.
+
+You can filter the list of policies that is returned using the optional 
+OnlyAttached, Scope, and PathPrefix parameters. For example, to list only the 
+customer managed policies in your AWS account, set Scope to Local. 
+To list only AWS managed policies, set Scope to AWS.
+
+=over
+
+=item OnlyAttached (optional)
+
+A flag to filter the results to only the attached policies.
+When OnlyAttached is true, the returned list contains only the 
+policies that are attached to a user, group, or role. 
+When OnlyAttached is false, or when the parameter is not 
+included, all policies are returned.
+
+=item PathPrefix (optional)
+
+The path prefix for filtering the results. 
+If it is not included, it defaults to a slash (/), listing all policies.
+
+=item Scope (optional)
+
+The scope to use for filtering the results.
+
+To list only AWS managed policies, set Scope to AWS. 
+To list only the customer managed policies in your AWS account, set Scope to Local.
+If it is not included, or if it is set to All, all policies are returned.
+
+=back
+
+Returns Net::Amazon::IAM::Policies on success or Net::Amazon::IAM::Error on fail.
+When no policies found, the Policies attribute will be just empty array.
+
+=cut
+
 sub list_policies {
    my $self = shift;
 
-   my $xml = $self->_sign(Action => 'ListPolicies');
+   my %args = validate(@_, {
+      Marker       => { type => SCALAR, optional => 1 },
+      MaxItems     => { type => SCALAR, optional => 1 },
+      PathPrefix   => { type => SCALAR, optional => 1, default => '/' },
+      OnlyAttached => { regex => qr/true|false/, optional => 1, default => 'false' },
+      Scope        => { regex => qr/AWS|Local|All/, optional => 1, default => 'All' },
+   });
 
-   print Dumper $xml;
-   exit;
+   my $xml = $self->_sign(Action => 'ListPolicies', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      my %result = %{$xml->{'ListPoliciesResult'}};
+      my $policies;
+
+      if ( grep { defined && length } $result{'Policies'} ) {
+         if(ref($result{'Policies'}{'member'}) eq 'ARRAY') {
+            for my $policy(@{$result{'Policies'}{'member'}}) {
+               my $p = Net::Amazon::IAM::Policy->new(
+                  $policy,
+               );
+
+               push @$policies, $p;
+            }
+         }else{
+            my $p = Net::Amazon::IAM::Policy->new(
+               $result{'Policies'}{'member'},
+            );
+
+            push @$policies, $p;
+         }
+      }else{
+         $policies = [];
+      }
+
+      return Net::Amazon::IAM::Policies->new(
+         Policies => $policies,
+      );
+   }
 }
 
 =head2 put_user_policy(%params)
