@@ -33,6 +33,20 @@ has 'errors'        => (
     required    => 1,
 );
 
+=back
+
+=head2 as_string()
+
+Format error as single string.
+
+=over
+
+Returns error as string.
+
+=back
+
+=cut
+
 sub as_string {
   my $self = shift;
   my $errors = join '', map { '['.$_->code.'] '.$_->message."\n" } @{$self->errors};
@@ -40,8 +54,6 @@ sub as_string {
 }
 
 __PACKAGE__->meta->make_immutable();
-
-=back
 
 =head1 AUTHOR
 

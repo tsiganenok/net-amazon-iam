@@ -7,19 +7,23 @@ Net::Amazon::IAM::Error
 
 =head1 DESCRIPTION
 
-A class representing an IAM API error.
+A class representing one or more errors from an API request.
 
 =head1 ATTRIBUTES
 
 =over
 
+=item request_id (required)
+
+The ID of the request associated with this error.
+
 =item code (required)
 
-The error code returned from the API request.
+Error code
 
-=item message (required)
+=item message(required)
 
-The long form message about the error.
+Error message
 
 =cut
 
@@ -29,14 +33,26 @@ has 'code'       => ( is => 'ro', isa => 'Str', required => 1 );
 has 'message'    => ( is => 'ro', isa => 'Str', required => 1 );
 has 'request_id' => ( is => 'ro', isa => 'Str', required => 1 );
 
+=back
+
+=head2 as_string()
+
+Format error as single string.
+
+=over
+
+Returns error as string.
+
+=back
+
+=cut
+
 sub as_string {
   my $self = shift;
   return '['.$self->code.'] '.$self->message;
 }
 
 __PACKAGE__->meta->make_immutable();
-
-=back
 
 =head1 AUTHOR
 
