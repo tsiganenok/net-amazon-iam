@@ -41,9 +41,9 @@ IAM Query API version: '2010-05-08'
 
 =head1 SYNOPSIS
 
- use Net::Amazon::EC2;
+ use Net::Amazon::IAM;
 
- my $iam = Net::Amazon::EC2->new(
+ my $iam = Net::Amazon::IAM->new(
    AWSAccessKeyId => 'PUBLIC_KEY_HERE',
    SecretAccessKey => 'SECRET_KEY_HERE'
  );
