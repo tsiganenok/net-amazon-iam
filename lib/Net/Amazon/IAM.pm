@@ -189,7 +189,7 @@ has 'version'           => ( is => 'ro', isa => 'Str',  default => '2010-05-08' 
 has 'ssl'               => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'return_errors'     => ( is => 'ro', isa => 'Bool', default => 1 );
 
-sub timestamp {
+sub _timestamp {
    return strftime("%Y-%m-%dT%H:%M:%SZ",gmtime);
 }
 
@@ -233,7 +233,7 @@ sub _sign {
    my %args      = @_;
    my $action    = delete $args{'Action'};
    my %sign_hash = %args;
-   my $timestamp = $self->timestamp;
+   my $timestamp = $self->_timestamp;
 
    $sign_hash{'Action'}           = $action;
    $sign_hash{'Version'}          = $self->version;
