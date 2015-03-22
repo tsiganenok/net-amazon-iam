@@ -1,8 +1,6 @@
 package Net::Amazon::IAM;
 use Moose;
 
-use vars qw($VERSION);
-
 use URI;
 use Carp;
 use JSON;
@@ -26,7 +24,7 @@ use Net::Amazon::IAM::AccessKey;
 use Net::Amazon::IAM::AccessKeyMetadata;
 use Net::Amazon::IAM::AccessKeysList;
 
-$VERSION = '0.01';
+our $VERSION = '0.01';
 
 =head1 NAME
 
@@ -43,7 +41,7 @@ IAM Query API version: '2010-05-08'
  use Net::Amazon::IAM;
 
  my $iam = Net::Amazon::IAM->new(
-   AWSAccessKeyId => 'PUBLIC_KEY_HERE',
+   AWSAccessKeyId  => 'PUBLIC_KEY_HERE',
    SecretAccessKey => 'SECRET_KEY_HERE'
  );
 
