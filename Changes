@@ -1,4 +1,8 @@
 
+0.02    2015-03-22
+        Igor Tsigankov     * Fixed POD to pass tests
+                           * Implemented list policies
+
 0.01    2015-03-22
         Igor Tsigankov     First version. Following methods implemented:
                            create_user

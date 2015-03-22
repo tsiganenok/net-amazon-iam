@@ -25,7 +25,7 @@ use Net::Amazon::IAM::AccessKey;
 use Net::Amazon::IAM::AccessKeyMetadata;
 use Net::Amazon::IAM::AccessKeysList;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 NAME
 
@@ -33,7 +33,7 @@ Net::Amazon::IAM - Perl interface to the Amazon Identity and Access Management.
 
 =head1 VERSION
 
-This is Net::Amazon::IAM version 0.01
+This is Net::Amazon::IAM version 0.02
 
 IAM Query API version: '2010-05-08'
 
