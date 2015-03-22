@@ -26,6 +26,9 @@ use Net::Amazon::IAM::User;
 use Net::Amazon::IAM::Policy;
 use Net::Amazon::IAM::UserPolicy;
 use Net::Amazon::IAM::Group;
+use Net::Amazon::IAM::AccessKey;
+use Net::Amazon::IAM::AccessKeyMetadata;
+use Net::Amazon::IAM::AccessKeysList;
 
 $VERSION = '0.01';
 
@@ -835,6 +838,156 @@ sub delete_user_policy {
       return $self->_parse_errors($xml);
    } else {
       return 1;
+   }
+}
+
+=head2 create_access_key(%params)
+
+Creates a new AWS secret access key and corresponding AWS access key ID for the specified user. 
+The default status for new keys is Active.
+If you do not specify a user name, IAM determines the user name implicitly based on the AWS access 
+key ID signing the request. Because this action works for access keys under the AWS account, you can use 
+this action to manage root credentials even if the AWS account has no associated users.
+
+Important:
+To ensure the security of your AWS account, the secret access key is accessible only during 
+key and user creation. You must save the key (for example, in a text file) if you want to be 
+able to access it again. If a secret key is lost, you can delete the access keys for the associated 
+user and then create new keys.
+
+=over
+
+=item UserName (optional)
+
+The user name that the new key will belong to.
+
+=back
+
+Returns Net::Amazon::IAM::AccessKey object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub create_access_key {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      UserName => { type => SCALAR, optional => 1 },
+   });
+
+   my $xml = $self->_sign(Action => 'CreateAccessKey', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return Net::Amazon::IAM::AccessKey->new(
+         $xml->{'CreateAccessKeyResult'}{'AccessKey'},
+      );
+   }
+}
+
+=head2 delete_access_key(%params)
+
+Deletes the access key associated with the specified user.
+
+If you do not specify a user name, IAM determines the user name implicitly based
+on the AWS access key ID signing the request. Because this action works for access
+keys under the AWS account, you can use this action to manage root credentials even
+if the AWS account has no associated users.
+
+=over
+
+=item AccessKeyId (required)
+
+The access key ID for the access key ID and secret access key you want to delete.
+
+=item UserName (optional)
+
+The name of the user whose key you want to delete.
+
+=back
+
+Returns true on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub delete_access_key {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      AccessKeyId => { type => SCALAR },
+      UserName    => { type => SCALAR, optional => 1 },
+   });
+
+   my $xml = $self->_sign(Action => 'DeleteAccessKey', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
+}
+
+=head2 list_access_keys(%params)
+
+Returns information about the access key IDs associated with the specified user. 
+If the UserName field is not specified, the UserName is determined implicitly based on the AWS access 
+key ID used to sign the request. Because this action works for access keys under the AWS account, 
+you can use this action to manage root credentials even if the AWS account has no associated users.
+
+=over
+
+=item UserName (optional)
+
+The name of the user.
+
+=back
+
+Returns Net::Amazon::IAM::AccessKeysList on success.
+If specified user has no keys, "Keys" attribute of Net::Amazon::IAM::AccessKeysList object
+will be just empty array.
+Returns Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub list_access_keys {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      UserName => { type => SCALAR, optional => 1 },
+   });
+
+   my $xml = $self->_sign(Action => 'ListAccessKeys', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      my %result = %{$xml->{'ListAccessKeysResult'}};
+
+      if ( grep { defined && length } $result{'AccessKeyMetadata'} ) {
+         my $keys;
+
+         if(ref($result{'AccessKeyMetadata'}{'member'}) eq 'ARRAY') {
+            for my $key ( @{$result{'AccessKeyMetadata'}{'member'}} ) {
+               my $k = Net::Amazon::IAM::AccessKeyMetadata->new(
+                  $key,
+               );
+               push @$keys, $k;
+            }
+         }else{
+            my $k = Net::Amazon::IAM::AccessKeyMetadata->new(
+               $result{'AccessKeyMetadata'}{'member'},
+            );
+            push @$keys, $k;
+         }
+
+         return Net::Amazon::IAM::AccessKeysList->new(
+            Keys => $keys,
+         );
+      }else{
+         return Net::Amazon::IAM::AccessKeysList->new(
+            Keys => [],
+         );
+      }
    }
 }
 
