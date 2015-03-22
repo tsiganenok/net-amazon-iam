@@ -18,6 +18,7 @@ requires        'Data::Dumper'           => 0;
 requires        'Params::Validate'       => 0;
 requires        'HTTP::Request::Common'  => 0;
 requires        'AWS::Signature4'        => 0;
+requires        'Moose'                  => 0;
 
 no_index;
 
