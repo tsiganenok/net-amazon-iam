@@ -962,9 +962,9 @@ sub list_access_keys {
       return $self->_parse_errors($xml);
    } else {
       my %result = %{$xml->{'ListAccessKeysResult'}};
+      my $keys;
 
       if ( grep { defined && length } $result{'AccessKeyMetadata'} ) {
-         my $keys;
 
          if(ref($result{'AccessKeyMetadata'}{'member'}) eq 'ARRAY') {
             for my $key ( @{$result{'AccessKeyMetadata'}{'member'}} ) {
@@ -979,15 +979,13 @@ sub list_access_keys {
             );
             push @$keys, $k;
          }
-
-         return Net::Amazon::IAM::AccessKeysList->new(
-            Keys => $keys,
-         );
       }else{
-         return Net::Amazon::IAM::AccessKeysList->new(
-            Keys => [],
-         );
+         $keys = [];
       }
+
+      return Net::Amazon::IAM::AccessKeysList->new(
+         Keys => $keys,
+      );
    }
 }
 
