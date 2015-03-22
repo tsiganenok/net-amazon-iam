@@ -16,5 +16,6 @@ my $min_pc = 0.18;
 eval "use Pod::Coverage $min_pc";
 plan skip_all => "Pod::Coverage $min_pc required for testing POD coverage"
     if $@;
+plan skip_all => 'these tests are for authors only' unless $ENV{AUTHOR_TESTING} or $ENV{RELEASE_TESTING};
 
 all_pod_coverage_ok();
