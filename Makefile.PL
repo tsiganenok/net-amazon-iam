@@ -1,26 +1,27 @@
-use 5.006;
-use strict;
-use warnings FATAL => 'all';
-use ExtUtils::MakeMaker;
+# Load the Module::Install bundled in ./inc/
+use inc::Module::Install;
 
-WriteMakefile(
-    NAME             => 'Net::Amazon::IAM',
-    AUTHOR           => q{Igor Tsigankov <tsiganenok@gmail.com>},
-    VERSION_FROM     => 'lib/Net/Amazon/IAM.pm',
-    ABSTRACT_FROM    => 'lib/Net/Amazon/IAM.pm',
-    LICENSE          => 'Artistic_2_0',
-    PL_FILES         => {},
-    MIN_PERL_VERSION => 5.006,
-    CONFIGURE_REQUIRES => {
-        'ExtUtils::MakeMaker' => 0,
-    },
-    BUILD_REQUIRES => {
-        'Test::More' => 0,
-    },
-    PREREQ_PM => {
-        #'ABC'              => 1.6,
-        #'Foo::Bar::Module' => 5.0401,
-    },
-    dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
-    clean => { FILES => 'Net-Amazon-IAM-*' },
-);
+# Define metadata
+name            'Net-Amazon-IAM';
+all_from        'lib/Net/Amazon/IAM.pm';
+
+# Specific dependencies
+requires        'URI'                    => 0;
+requires        'Carp'                   => 0;
+requires        'JSON'                   => 0;
+requires        'URI::Encode'            => 0;
+requires        'XML::Simple'            => 0;
+requires        'POSIX'                  => 0;
+requires        'LWP::UserAgent'         => 0;
+requires        'LWP::Protocol::https'   => 0;
+requires        'Data::Dumper'           => 0;
+requires        'Params::Validate'       => 0;
+requires        'HTTP::Request::Common'  => 0;
+requires        'AWS::Signature4'        => 0;
+
+no_index;
+
+repository 'https://github.com/tsiganenok/net-amazon-iam';
+
+auto_install;
+WriteAll;

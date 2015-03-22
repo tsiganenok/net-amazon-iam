@@ -1,5 +1,21 @@
-Revision history for Net-Amazon-IAM
 
-0.01    Date/time
-        First version, released on an unsuspecting world.
-
+0.01    2015-03-22
+        Igor Tsigankov     First version. Following methods implemented:
+                           create_user
+                           delete_user
+                           get_user
+                           update_user
+                           add_user_to_group
+                           remove_user_from_group
+                           create_group
+                           get_group
+                           delete_group
+                           create_policy
+                           get_policy
+                           delete_policy
+                           put_user_policy
+                           get_user_policy
+                           delete_user_policy
+                           create_access_key
+                           delete_access_key
+                           list_access_keys

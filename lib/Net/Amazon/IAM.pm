@@ -4,22 +4,19 @@ use Moose;
 use strict;
 use vars qw($VERSION);
 
-use XML::Simple;
-use LWP::UserAgent;
-use LWP::Protocol::https;
 use URI;
-use URI::Encode;
-use Data::Dumper qw(Dumper);
-use POSIX qw(strftime);
-use Params::Validate qw(validate SCALAR ARRAYREF HASHREF);
 use Carp;
 use JSON;
-
+use URI::Encode;
+use XML::Simple;
+use POSIX qw(strftime);
+use LWP::UserAgent;
+use LWP::Protocol::https;
+use Data::Dumper qw(Dumper);
+use Params::Validate qw(validate SCALAR ARRAYREF HASHREF);
 use HTTP::Request::Common;
 use AWS::Signature4;
 
-# remove the use lib once the module being installed as supposed to.
-use lib '/home/tis/git/net-amazon-iam/lib';
 use Net::Amazon::IAM::Error;
 use Net::Amazon::IAM::Errors;
 use Net::Amazon::IAM::User;
@@ -47,7 +44,7 @@ IAM Query API version: '2010-05-08'
  use Net::Amazon::EC2;
 
  my $iam = Net::Amazon::EC2->new(
-   AWSAccessKeyId => 'PUBLIC_KEY_HERE', 
+   AWSAccessKeyId => 'PUBLIC_KEY_HERE',
    SecretAccessKey => 'SECRET_KEY_HERE'
  );
 
@@ -96,42 +93,42 @@ my $policy = $iam->put_user_policy (
  }
 
 
-If an error occurs while communicating with IAM, these methods will 
+If an error occurs while communicating with IAM, these methods will
 throw a L<Net::Amazon::IAM::Error> exception.
 
 =head1 DESCRIPTION
 
-This module is a Perl interface to Amazon's Identity and Access Management (IAM). It uses the Query API to 
+This module is a Perl interface to Amazon's Identity and Access Management (IAM). It uses the Query API to
 communicate with Amazon's Web Services framework.
 
 =head1 CLASS METHODS
 
 =head2 new(%params)
 
-This is the constructor, it will return you a Net::Amazon::IAM object to work with.  It takes 
+This is the constructor, it will return you a Net::Amazon::IAM object to work with.  It takes
 these parameters:
 
 =over
 
 =item AWSAccessKeyId (required)
 
-Your AWS access key.  
+Your AWS access key.
 
 =item SecretAccessKey (required)
 
-Your secret key, B<WARNING!> don't give this out or someone will be able to use your account 
+Your secret key, B<WARNING!> don't give this out or someone will be able to use your account
 and incur charges on your behalf.
 
 =item debug (optional)
 
-A flag to turn on debugging. Among other useful things, it will make the failing api calls print 
+A flag to turn on debugging. Among other useful things, it will make the failing api calls print
 a stack trace. It is turned off by default.
 
 =back
 
 =cut
 
-has 'AWSAccessKeyId' => ( 
+has 'AWSAccessKeyId' => (
    is       => 'ro',
    isa      => 'Str',
    required => 1,
@@ -145,7 +142,7 @@ has 'AWSAccessKeyId' => (
    }
 );
 
-has 'SecretAccessKey' => ( 
+has 'SecretAccessKey' => (
    is       => 'ro',
    isa      => 'Str',
    required => 1,
@@ -159,7 +156,7 @@ has 'SecretAccessKey' => (
    }
 );
 
-has 'SecurityToken' => ( 
+has 'SecurityToken' => (
    is        => 'ro',
    isa       => 'Str',
    required  => 0,
@@ -174,9 +171,9 @@ has 'SecurityToken' => (
    }
 );
 
-has 'base_url' => ( 
-   is          => 'ro', 
-   isa         => 'Str', 
+has 'base_url' => (
+   is          => 'ro',
+   isa         => 'Str',
    required    => 1,
    lazy        => 1,
    default     => sub {
@@ -184,7 +181,7 @@ has 'base_url' => (
    }
 );
 
-has 'temp_creds' => ( 
+has 'temp_creds' => (
    is        => 'ro',
    lazy      => 1,
    predicate => 'has_temp_creds',
@@ -212,7 +209,7 @@ sub _fetch_iam_security_credentials {
    $ua->timeout(2);
 
    my $url = 'http://169.254.169.254/latest/meta-data/iam/security-credentials/';
-    
+
    $self->_debug("Attempting to fetch instance credentials");
 
    my $res = $ua->get($url);
@@ -277,7 +274,7 @@ sub _sign {
       SuppressEmpty => undef,             # Turn empty values into explicit undefs
    );
    my $xml;
-   
+
    # Check the result for connectivity problems, if so throw an error
    if ($res->code >= 500) {
       my $message = $res->status_line;
@@ -306,7 +303,7 @@ EOXML
 sub _parse_errors {
    my $self       = shift;
    my $errors_xml = shift;
-   
+
    my $es;
    my $request_id = $errors_xml->{'RequestId'};
 
@@ -327,7 +324,7 @@ sub _parse_errors {
 sub _debug {
    my $self    = shift;
    my $message = shift;
-   
+
    if ((grep { defined && length} $self->debug) && $self->debug == 1) {
       print "$message\n\n\n\n";
    }
@@ -335,7 +332,7 @@ sub _debug {
 
 sub _build_filters {
    my ($self, $args) = @_;
-   
+
    my $filters = delete $args->{Filter};
 
    return unless $filters && ref($filters) eq 'ARRAY';
@@ -411,7 +408,7 @@ sub delete_user {
    my %args = validate(@_, {
       UserName => { type => SCALAR },
    });
-   
+
    my $xml = $self->_sign(Action  => 'DeleteUser', %args);
 
    if ( grep { defined && length } $xml->{'Error'} ) {
@@ -612,7 +609,7 @@ sub create_group {
 
 =head2 get_group(%params)
 
-Returns group details and list of users that are in the specified group. 
+Returns group details and list of users that are in the specified group.
 
 =over
 
@@ -643,7 +640,7 @@ sub get_group {
       return $self->_parse_errors($xml);
    } else {
       my %result = %{$xml->{'GetGroupResult'}};
-      
+
       my $users;
       for my $user ( @{$result{'Users'}{'member'}} ) {
          my $u = Net::Amazon::IAM::User->new(
@@ -662,7 +659,7 @@ sub get_group {
 
 =head2 delete_group(%params)
 
-Deletes the specified group. The group must not contain any users or have any attached policies. 
+Deletes the specified group. The group must not contain any users or have any attached policies.
 
 =over
 
@@ -801,7 +798,7 @@ sub delete_policy {
    });
 
    my $xml = $self->_sign(Action => 'DeletePolicy', %args);
-   
+
    if ( grep { defined && length } $xml->{'Error'} ) {
       return $self->_parse_errors($xml);
    } else {
@@ -813,7 +810,7 @@ sub list_policies {
    my $self = shift;
 
    my $xml = $self->_sign(Action => 'ListPolicies');
-   
+
    print Dumper $xml;
    exit;
 }
@@ -942,16 +939,16 @@ sub delete_user_policy {
 
 =head2 create_access_key(%params)
 
-Creates a new AWS secret access key and corresponding AWS access key ID for the specified user. 
+Creates a new AWS secret access key and corresponding AWS access key ID for the specified user.
 The default status for new keys is Active.
-If you do not specify a user name, IAM determines the user name implicitly based on the AWS access 
-key ID signing the request. Because this action works for access keys under the AWS account, you can use 
+If you do not specify a user name, IAM determines the user name implicitly based on the AWS access
+key ID signing the request. Because this action works for access keys under the AWS account, you can use
 this action to manage root credentials even if the AWS account has no associated users.
 
 Important:
-To ensure the security of your AWS account, the secret access key is accessible only during 
-key and user creation. You must save the key (for example, in a text file) if you want to be 
-able to access it again. If a secret key is lost, you can delete the access keys for the associated 
+To ensure the security of your AWS account, the secret access key is accessible only during
+key and user creation. You must save the key (for example, in a text file) if you want to be
+able to access it again. If a secret key is lost, you can delete the access keys for the associated
 user and then create new keys.
 
 =over
@@ -1028,9 +1025,9 @@ sub delete_access_key {
 
 =head2 list_access_keys(%params)
 
-Returns information about the access key IDs associated with the specified user. 
-If the UserName field is not specified, the UserName is determined implicitly based on the AWS access 
-key ID used to sign the request. Because this action works for access keys under the AWS account, 
+Returns information about the access key IDs associated with the specified user.
+If the UserName field is not specified, the UserName is determined implicitly based on the AWS access
+key ID used to sign the request. Because this action works for access keys under the AWS account,
 you can use this action to manage root credentials even if the AWS account has no associated users.
 
 =over
