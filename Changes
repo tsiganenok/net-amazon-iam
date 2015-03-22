@@ -1,6 +1,6 @@
 
 0.02    2015-03-22
-        Igor Tsigankov     * Fixed POD to pass tests
+        Igor Tsigankov     * Fixed POD to pass tests (RT103004)
                            * Implemented list policies
 
 0.01    2015-03-22
