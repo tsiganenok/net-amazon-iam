@@ -23,6 +23,7 @@ use Net::Amazon::IAM::Error;
 use Net::Amazon::IAM::Errors;
 use Net::Amazon::IAM::User;
 use Net::Amazon::IAM::Policy;
+use Net::Amazon::IAM::UserPolicy;
 use Net::Amazon::IAM::Group;
 
 $VERSION = '0.01';
@@ -647,7 +648,7 @@ Retrieves information about the specified managed policy.
 
 =item PolicyArn (required)
 
-The name of the policy document.
+The Amazon Resource Name (ARN). ARNs are unique identifiers for AWS resources.
 
 =back
 
@@ -673,8 +674,36 @@ sub get_policy {
    }
 }
 
+=head2 delete_policy(%params)
+
+Deletes the specified managed policy.
+
+=over
+
+=item PolicyArn (required)
+
+The Amazon Resource Name (ARN). ARNs are unique identifiers for AWS resources.
+
+=back
+
+Returns true on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
 sub delete_policy {
    my $self = shift;
+
+   my %args = validate(@_, {
+      PolicyArn => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'DeletePolicy', %args);
+   
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
 }
 
 sub list_policies {
@@ -684,6 +713,114 @@ sub list_policies {
    
    print Dumper $xml;
    exit;
+}
+
+=head2 put_user_policy(%params)
+
+Deletes the specified managed policy.
+
+=over
+
+=item PolicyDocument (required)
+
+The policy document. Must be HashRef.
+
+=item PolicyName (required)
+
+The name of the policy document.
+
+=item UserName (required)
+
+The name of the user to associate the policy with.
+
+=back
+
+Returns true on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub put_user_policy {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      PolicyDocument => { type => HASHREF },
+      PolicyName     => { type => SCALAR },
+      UserName       => { type => SCALAR },
+   });
+
+   $args{'PolicyDocument'} = encode_json delete $args{'PolicyDocument'};
+
+   my $xml = $self->_sign(Action => 'PutUserPolicy', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
+}
+
+#FIXME: need to decode returned document bach to utf_8 or whatever
+#returned example:
+# $VAR1 = bless( {
+#                  'PolicyName' => 'igorallowsomes3access',
+#                  'UserName' => 'igortest1',
+#                  'PolicyDocument' => '%7B%22Statement%22%3A%5B%7B%22Action%22%3A%5B%22s3%3AGet%2A%22%2C%22s3%3AList%2A%22%5D%2C%22Resource%22%3A%5B%22arn%3Aaws%3As3%3A%3A%3Aigortestbucket%22%2C%22arn%3Aaws%3As3%3A%3A%3Aigortestbucket%2F%2A%22%5D%2C%22Effect%22%3A%22Allow%22%7D%5D%2C%22Version%22%3A%222012-10-17%22%7D'
+#                }, 'Net::Amazon::IAM::UserPolicy' );
+
+sub get_user_policy {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      PolicyName     => { type => SCALAR },
+      UserName       => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'GetUserPolicy', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return Net::Amazon::IAM::UserPolicy->new(
+         $xml->{'GetUserPolicyResult'}
+      );
+   }
+}
+
+=head2 delete_user_policy(%params)
+
+Deletes the specified inline policy that is embedded in the specified user.
+
+=over
+
+=item PolicyName (required)
+
+The name identifying the policy document to delete.
+
+=item UserName (required)
+
+The name (friendly name, not ARN) identifying the user that the policy is embedded in.
+
+=back
+
+Returns true on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub delete_user_policy {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      PolicyName     => { type => SCALAR },
+      UserName       => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'DeleteUserPolicy', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
 }
 
 no Moose;
