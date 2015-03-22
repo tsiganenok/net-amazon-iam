@@ -8,6 +8,7 @@ use XML::Simple;
 use LWP::UserAgent;
 use LWP::Protocol::https;
 use URI;
+use URI::Encode;
 use Data::Dumper qw(Dumper);
 use POSIX qw(strftime);
 use Params::Validate qw(validate SCALAR ARRAYREF HASHREF);
@@ -759,13 +760,25 @@ sub put_user_policy {
    }
 }
 
-#FIXME: need to decode returned document bach to utf_8 or whatever
-#returned example:
-# $VAR1 = bless( {
-#                  'PolicyName' => 'igorallowsomes3access',
-#                  'UserName' => 'igortest1',
-#                  'PolicyDocument' => '%7B%22Statement%22%3A%5B%7B%22Action%22%3A%5B%22s3%3AGet%2A%22%2C%22s3%3AList%2A%22%5D%2C%22Resource%22%3A%5B%22arn%3Aaws%3As3%3A%3A%3Aigortestbucket%22%2C%22arn%3Aaws%3As3%3A%3A%3Aigortestbucket%2F%2A%22%5D%2C%22Effect%22%3A%22Allow%22%7D%5D%2C%22Version%22%3A%222012-10-17%22%7D'
-#                }, 'Net::Amazon::IAM::UserPolicy' );
+=head2 get_user_policy(%params)
+
+Retrieves the specified inline policy document that is embedded in the specified user.
+
+=over
+
+=item PolicyName (required)
+
+The name of the policy document to get.
+
+=item UserName (required)
+
+The name of the user who the policy is associated with.
+
+=back
+
+Returns Net::Amazon::IAM::UserPolicy object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
 
 sub get_user_policy {
    my $self = shift;
@@ -780,9 +793,11 @@ sub get_user_policy {
    if ( grep { defined && length } $xml->{'Error'} ) {
       return $self->_parse_errors($xml);
    } else {
-      return Net::Amazon::IAM::UserPolicy->new(
+      my $user_policy = Net::Amazon::IAM::UserPolicy->new(
          $xml->{'GetUserPolicyResult'}
       );
+      $user_policy->{'PolicyDocument'} = decode_json(URI::Encode->new()->decode($user_policy->PolicyDocument));
+      return $user_policy;
    }
 }
 
