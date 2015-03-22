@@ -930,6 +930,56 @@ sub delete_user_policy {
    }
 }
 
+=head2 list_user_policies(%params)
+
+Lists the names of the inline policies embedded in the specified user.
+
+=over
+
+=item UserName (required)
+
+The name of the user to list policies for.
+
+=back
+
+When found one or more policies, this method will return ArrayRef with policy names.
+Once no policies found, will return undef;
+Net::Amazon::IAM::Error will be returned on error
+
+=cut
+
+sub list_user_policies {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      UserName => { type => SCALAR },
+      Marker   => { type => SCALAR, optional => 1 },
+      MaxItems => { type => SCALAR, optional => 1 },
+   });
+
+   my $xml = $self->_sign(Action => 'ListUserPolicies', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      my $policies;
+
+      my %result = %{$xml->{'ListUserPoliciesResult'}};
+
+      if ( grep { defined && length } $result{'PolicyNames'} ) {
+         if(ref($result{'PolicyNames'}{'member'}) eq 'ARRAY') {
+            $policies = $result{'PolicyNames'}{'member'};
+         }else{
+            push @$policies, $result{'PolicyNames'}{'member'};
+         }
+      } else {
+         $policies = undef;
+      }
+
+      return $policies;
+   }
+}
+
 =head2 create_access_key(%params)
 
 Creates a new AWS secret access key and corresponding AWS access key ID for the specified user.

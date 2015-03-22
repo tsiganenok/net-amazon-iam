@@ -19,3 +19,4 @@
                            create_access_key
                            delete_access_key
                            list_access_keys
+                           list_user_policies
