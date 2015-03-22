@@ -32,6 +32,105 @@ use Net::Amazon::IAM::AccessKeysList;
 
 $VERSION = '0.01';
 
+=head1 NAME
+
+Net::Amazon::IAM - Perl interface to the Amazon Identity and Access Management.
+
+=head1 VERSION
+
+This is Net::Amazon::IAM version 0.01
+
+IAM Query API version: '2010-05-08'
+
+=head1 SYNOPSIS
+
+ use Net::Amazon::EC2;
+
+ my $iam = Net::Amazon::EC2->new(
+   AWSAccessKeyId => 'PUBLIC_KEY_HERE', 
+   SecretAccessKey => 'SECRET_KEY_HERE'
+ );
+
+ # create new user
+ my $user = $iam->create_user (
+   UserName => 'testuser',
+   Path     => '/path/to/test/user/',
+ );
+
+ # delete user
+ my $delete = $iam->delete_user(UserName => 'testuser');
+ if($delete->isa("Net::Amazon::IAM::Error")) {
+   print Dumper $delete;
+ }else{
+   print "User was successfuly deleted\n";
+ }
+
+ # add policy to user
+ my $policy_document = {
+   Version => '2012-10-17',
+   Statement => [
+      {
+         Effect   => 'Allow',
+         Action   => [
+            's3:Get*',
+            's3:List*',
+         ],
+         Resource => [
+            'arn:aws:s3:::sometestbucket',
+            'arn:aws:s3:::sometestbucket/*',
+         ],
+      },
+   ],
+};
+
+my $policy = $iam->put_user_policy (
+   PolicyName     => 'somtestpolicy',
+   UserName       => 'sometestuser',
+   PolicyDocument => $policy_document,
+);
+
+ if($policy->isa("Net::Amazon::IAM::Error")) {
+   print Dumper $policy;
+ }else{
+   print "Policy was added\n";
+ }
+
+
+If an error occurs while communicating with IAM, these methods will 
+throw a L<Net::Amazon::IAM::Error> exception.
+
+=head1 DESCRIPTION
+
+This module is a Perl interface to Amazon's Identity and Access Management (IAM). It uses the Query API to 
+communicate with Amazon's Web Services framework.
+
+=head1 CLASS METHODS
+
+=head2 new(%params)
+
+This is the constructor, it will return you a Net::Amazon::IAM object to work with.  It takes 
+these parameters:
+
+=over
+
+=item AWSAccessKeyId (required)
+
+Your AWS access key.  
+
+=item SecretAccessKey (required)
+
+Your secret key, B<WARNING!> don't give this out or someone will be able to use your account 
+and incur charges on your behalf.
+
+=item debug (optional)
+
+A flag to turn on debugging. Among other useful things, it will make the failing api calls print 
+a stack trace. It is turned off by default.
+
+=back
+
+=cut
+
 has 'AWSAccessKeyId' => ( 
    is       => 'ro',
    isa      => 'Str',
@@ -142,7 +241,7 @@ sub _fetch_iam_security_credentials {
 sub _sign {
    my $self      = shift;
    my %args      = @_;
-   my $action    = delete $args{Action};
+   my $action    = delete $args{'Action'};
    my %sign_hash = %args;
    my $timestamp = $self->timestamp;
 
@@ -150,7 +249,7 @@ sub _sign {
    $sign_hash{'Version'}          = $self->version;
 
    if ($self->has_temp_creds || $self->has_SecurityToken) {
-      $sign_hash{SecurityToken} = $self->SecurityToken;
+      $sign_hash{'SecurityToken'} = $self->SecurityToken;
    }
 
    my $signer = AWS::Signature4->new(
