@@ -1,7 +1,6 @@
 package Net::Amazon::IAM;
 use Moose;
 
-use strict;
 use vars qw($VERSION);
 
 use URI;
@@ -131,7 +130,6 @@ a stack trace. It is turned off by default.
 has 'AWSAccessKeyId' => (
    is       => 'ro',
    isa      => 'Str',
-   required => 1,
    lazy     => 1,
    default  => sub {
       if (defined($_[0]->temp_creds)) {
@@ -145,7 +143,6 @@ has 'AWSAccessKeyId' => (
 has 'SecretAccessKey' => (
    is       => 'ro',
    isa      => 'Str',
-   required => 1,
    lazy     => 1,
    default  => sub {
       if (defined($_[0]->temp_creds)) {
@@ -159,7 +156,6 @@ has 'SecretAccessKey' => (
 has 'SecurityToken' => (
    is        => 'ro',
    isa       => 'Str',
-   required  => 0,
    lazy      => 1,
    predicate => 'has_SecurityToken',
    default   => sub {
@@ -174,7 +170,6 @@ has 'SecurityToken' => (
 has 'base_url' => (
    is          => 'ro',
    isa         => 'Str',
-   required    => 1,
    lazy        => 1,
    default     => sub {
       return 'http' . ($_[0]->ssl ? 's' : '') . '://iam.amazonaws.com';
@@ -191,9 +186,9 @@ has 'temp_creds' => (
    },
 );
 
-has 'debug'             => ( is => 'ro', isa => 'Str', required => 0, default => 0 );
-has 'version'           => ( is => 'ro', isa => 'Str', required => 1, default => '2010-05-08' );
-has 'ssl'               => ( is => 'ro', isa => 'Bool', required => 1, default => 1 );
+has 'debug'             => ( is => 'ro', isa => 'Str',  default => 0 );
+has 'version'           => ( is => 'ro', isa => 'Str',  default => '2010-05-08' );
+has 'ssl'               => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'return_errors'     => ( is => 'ro', isa => 'Bool', default => 1 );
 
 sub timestamp {
