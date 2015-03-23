@@ -1130,6 +1130,7 @@ key ID signing the request. Because this action works for access keys under the 
 this action to manage root credentials even if the AWS account has no associated users.
 
 B<Important>:
+
 To ensure the security of your AWS account, the secret access key is accessible only during
 key and user creation. You must save the key (for example, in a text file) if you want to be
 able to access it again. If a secret key is lost, you can delete the access keys for the associated
@@ -1454,6 +1455,7 @@ sub list_roles {
 Deletes the specified role. The role must not have any policies attached.
 
 B<Important>:
+
 Make sure you do not have any Amazon EC2 instances running with the role you are about to delete. 
 Deleting a role or instance profile that is associated with a running instance will break any 
 applications running on the instance.
@@ -1492,7 +1494,8 @@ Creates a new virtual MFA device for the AWS account.
 After creating the virtual MFA, use EnableMFADevice to 
 attach the MFA device to an IAM user. 
 
-B<Important>
+B<Important>:
+
 The seed information contained in the QR code and the Base32 string 
 should be treated like any other secret access information, such as 
 your AWS access keys or your passwords. After you provision your virtual 
@@ -1533,6 +1536,97 @@ sub create_virtual_MFA_device {
       return Net::Amazon::IAM::VirtualMFADevice->new(
          $xml->{'CreateVirtualMFADeviceResult'}{'VirtualMFADevice'},
       );
+   }
+}
+
+=head2 delete_virtual_MFA_device(%params)
+
+Deletes a virtual MFA device.
+
+B<Note>:
+
+You must deactivate a user's virtual MFA device before you can delete it.
+
+=over
+
+=item SerialNumber (required)
+
+The serial number that uniquely identifies the MFA device. 
+For virtual MFA devices, the serial number is the same as the ARN.
+
+=back
+
+Returns true on success or Net::Amazon::IAM::Error on fail.
+
+B<This method wasn't tested>
+
+=cut
+
+sub delete_virtual_MFA_device {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      SerialNumber => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'DeleteVirtualMFADevice', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
+}
+
+=head2 enable_MFA_device(%params)
+
+Enables the specified MFA device and associates it with the specified user name. 
+When enabled, the MFA device is required for every subsequent login by the user 
+name associated with the device.
+
+=over
+
+=item AuthenticationCode1 (required)
+
+An authentication code emitted by the device.
+
+=item AuthenticationCode2 (required)
+
+A subsequent authentication code emitted by the device.
+
+=item SerialNumber (required)
+
+The serial number that uniquely identifies the MFA device. 
+For virtual MFA devices, the serial number is the device ARN.
+
+=item UserName (required)
+
+The name of the user for whom you want to enable the MFA device.
+
+=back
+
+Returns true on success or Net::Amazon::IAM::Error on fail.
+
+B<This method wasn't tested>
+
+=cut
+
+sub enable_MFA_device {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      AuthenticationCode1 => { type => SCALAR },
+      AuthenticationCode2 => { type => SCALAR },
+      SerialNumber        => { type => SCALAR },
+      UserName            => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'EnableMFADevice', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
    }
 }
 
