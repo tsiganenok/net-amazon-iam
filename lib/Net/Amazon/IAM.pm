@@ -1376,20 +1376,20 @@ Retrieves information about the specified role.
 
 =over
 
-=item Marker (required)
+=item Marker (optional)
 
 Use this parameter only when paginating results, and only in a subsequent 
 request after you've received a response where the results are truncated. 
 Set it to the value of the Marker element in the response you just received.
 
-=item MaxItems (required)
+=item MaxItems (optional)
 
 Use this parameter only when paginating results to indicate the maximum number 
 of roles you want in the response. If there are additional roles beyond the maximum 
 you specify, the IsTruncated response element is true. This parameter is optional. 
 If you do not include it, it defaults to 100.
 
-=item PathPrefix (required)
+=item PathPrefix (optional)
 
 The path prefix for filtering the results. For example, the prefix /application_abc/component_xyz/ 
 gets all roles whose path starts with /application_abc/component_xyz/.
@@ -1671,6 +1671,79 @@ sub deactivate_MFA_device {
       return $self->_parse_errors($xml);
    } else {
       return 1;
+   }
+}
+
+=head2 list_MFA_devices(%params)
+
+Retrieves information about the specified role.
+
+=over
+
+=item Marker (optional)
+
+Use this parameter only when paginating results, and only in a subsequent 
+request after you've received a response where the results are truncated. 
+Set it to the value of the Marker element in the response you just received.
+
+=item MaxItems (optional)
+
+Use this parameter only when paginating results to indicate the maximum number 
+of MFADevices you want in the response. If there are additional devices beyond the maximum 
+you specify, the IsTruncated response element is true. This parameter is optional. 
+If you do not include it, it defaults to 100.
+
+=item UserName (optional)
+
+The name of the user whose MFA devices you want to list.
+
+=back
+
+Returns Net::Amazon::IAM::MFADevices object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub list_MFA_devices {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      Marker   => { type => SCALAR, optional => 1 },
+      MaxItems => { type => SCALAR, optional => 1 },
+      UserName => { type => SCALAR, optional => 1 },
+   });
+
+   my $xml = $self->_sign(Action => 'ListMFADevices', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      my $devices;
+
+      my %result = %{$xml->{'ListMFADevicesResult'}};
+
+      if ( grep { defined && length } $result{'MFADevices'} ) {
+         if(ref($result{'MFADevices'}{'member'}) eq 'ARRAY') {
+            for my $device(@{$result{'MFADevices'}{'member'}}) {
+               my $d = Net::Amazon::IAM::MFADevice->new(
+                  $device,
+               );
+               push @$devices, $d;
+            }
+         }else{
+            my $d = Net::Amazon::IAM::MFADevice->new(
+               $result{'MFADevices'}{'member'},
+            );
+            push @$devices, $d;
+         }
+      }else{
+         $devices = [];
+      }
+
+      return Net::Amazon::IAM::MFADevices->new(
+         MFADevices  => $devices,
+         Marker      => $xml->{'ListMFADevicesResult'}{'Marker'},
+         IsTruncated => $xml->{'ListMFADevicesResult'}{'IsTruncated'},
+      );
    }
 }
 
