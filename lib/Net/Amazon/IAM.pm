@@ -124,6 +124,10 @@ and incur charges on your behalf.
 A flag to turn on debugging. Among other useful things, it will make the failing api calls print
 a stack trace. It is turned off by default.
 
+=item return_errors (optional)
+
+A flag to enable returning errors as objects instead of throwing them as exceptions.
+
 =back
 
 =cut
@@ -190,7 +194,7 @@ has 'temp_creds' => (
 has 'debug'             => ( is => 'ro', isa => 'Str',  default => 0 );
 has 'version'           => ( is => 'ro', isa => 'Str',  default => '2010-05-08' );
 has 'ssl'               => ( is => 'ro', isa => 'Bool', default => 1 );
-has 'return_errors'     => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'return_errors'     => ( is => 'ro', isa => 'Bool', default => 0 );
 
 sub _timestamp {
    return strftime("%Y-%m-%dT%H:%M:%SZ",gmtime);
@@ -309,12 +313,16 @@ sub _parse_errors {
       request_id => $request_id,
    );
 
-   # Print a stack trace if debugging is enabled
-   if ($self->debug) {
-      confess 'Last error was: ' . $error;
+   if ($self->return_errors) {
+      return $error;
    }
 
-   return $error;
+   # Print a stack trace if debugging is enabled
+   if ($self->debug) {
+      confess 'Last error was: ' . $error->message;
+   }else{
+      croak $error;
+   }
 }
 
 sub _debug {
