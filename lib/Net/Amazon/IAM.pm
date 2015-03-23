@@ -29,6 +29,7 @@ use Net::Amazon::IAM::Role;
 use Net::Amazon::IAM::Roles;
 use Net::Amazon::IAM::VirtualMFADevice;
 use Net::Amazon::IAM::MFADevice;
+use Net::Amazon::IAM::MFADevices;
 
 our $VERSION = '0.03';
 
@@ -1672,8 +1673,6 @@ sub deactivate_MFA_device {
       return 1;
    }
 }
-
-
 
 no Moose;
 1;
