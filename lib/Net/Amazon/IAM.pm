@@ -25,6 +25,7 @@ use Net::Amazon::IAM::GetGroupResult;
 use Net::Amazon::IAM::AccessKey;
 use Net::Amazon::IAM::AccessKeyMetadata;
 use Net::Amazon::IAM::AccessKeysList;
+use Net::Amazon::IAM::Role;
 
 our $VERSION = '0.03';
 
@@ -1262,6 +1263,62 @@ sub list_access_keys {
 
       return Net::Amazon::IAM::AccessKeysList->new(
          Keys => $keys,
+      );
+   }
+}
+
+=head2 create_role(%params)
+
+Creates a new role for your AWS account.
+
+The example policy grants permission to an EC2 instance to assume the role.
+   {
+      "Version": "2012-10-17",
+      "Statement": [{
+         "Effect": "Allow",
+         "Principal": {
+            "Service": ["ec2.amazonaws.com"]
+         },
+            "Action": ["sts:AssumeRole"]
+      }]
+   }
+
+=over
+
+=item AssumeRolePolicyDocument (required)
+
+The policy that grants an entity permission to assume the role.
+
+=item RoleName (required)
+
+The name of the role to create.
+
+=item Path (optional)
+
+The path to the role. 
+
+=back
+
+Returns Net::Amazon::IAM::Role object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub create_role {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      AssumeRolePolicyDocument => { type => SCALAR },
+      RoleName                 => { type => SCALAR },
+      Path                     => { type => SCALAR, optional => 1 },
+   });
+
+   my $xml = $self->_sign(Action => 'CreateRole', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return Net::Amazon::IAM::Role->new(
+         $xml->{'CreateRoleResult'}{'Role'},
       );
    }
 }
