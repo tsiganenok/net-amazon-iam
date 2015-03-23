@@ -1128,7 +1128,7 @@ If you do not specify a user name, IAM determines the user name implicitly based
 key ID signing the request. Because this action works for access keys under the AWS account, you can use
 this action to manage root credentials even if the AWS account has no associated users.
 
-Important:
+B<Important>:
 To ensure the security of your AWS account, the secret access key is accessible only during
 key and user creation. You must save the key (for example, in a text file) if you want to be
 able to access it again. If a secret key is lost, you can delete the access keys for the associated
@@ -1308,10 +1308,12 @@ sub create_role {
    my $self = shift;
 
    my %args = validate(@_, {
-      AssumeRolePolicyDocument => { type => SCALAR },
+      AssumeRolePolicyDocument => { type => HASHREF },
       RoleName                 => { type => SCALAR },
       Path                     => { type => SCALAR, optional => 1 },
    });
+
+   $args{'AssumeRolePolicyDocument'} = encode_json delete $args{'AssumeRolePolicyDocument'};
 
    my $xml = $self->_sign(Action => 'CreateRole', %args);
 
@@ -1443,6 +1445,43 @@ sub list_roles {
          Marker      => $xml->{'ListRolesResult'}{'Marker'},
          IsTruncated => $xml->{'ListRolesResult'}{'IsTruncated'},
       );
+   }
+}
+
+=head2 delete_role(%params)
+
+Deletes the specified role. The role must not have any policies attached.
+
+B<Important>:
+Make sure you do not have any Amazon EC2 instances running with the role you are about to delete. 
+Deleting a role or instance profile that is associated with a running instance will break any 
+applications running on the instance.
+
+=over
+
+=item RoleName (required)
+
+The name of the role to delete.
+
+=back
+
+Returns true on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub delete_role {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      RoleName => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'DeleteRole', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
    }
 }
 
