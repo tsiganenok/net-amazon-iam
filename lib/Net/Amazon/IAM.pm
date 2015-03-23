@@ -31,6 +31,8 @@ use Net::Amazon::IAM::VirtualMFADevice;
 use Net::Amazon::IAM::VirtualMFADevices;
 use Net::Amazon::IAM::MFADevice;
 use Net::Amazon::IAM::MFADevices;
+use Net::Amazon::IAM::InstanceProfile;
+use Net::Amazon::IAM::InstanceProfiles;
 
 our $VERSION = '0.03';
 
