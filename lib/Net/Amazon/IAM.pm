@@ -28,6 +28,7 @@ use Net::Amazon::IAM::AccessKeysList;
 use Net::Amazon::IAM::Role;
 use Net::Amazon::IAM::Roles;
 use Net::Amazon::IAM::VirtualMFADevice;
+use Net::Amazon::IAM::VirtualMFADevices;
 use Net::Amazon::IAM::MFADevice;
 use Net::Amazon::IAM::MFADevices;
 
@@ -1577,6 +1578,83 @@ sub delete_virtual_MFA_device {
       return $self->_parse_errors($xml);
    } else {
       return 1;
+   }
+}
+
+=head2 list_virtual_MFA_devices(%params)
+
+Lists the virtual MFA devices under the AWS account by assignment status. 
+
+=over
+
+=item Marker (optional)
+
+Use this parameter only when paginating results, and only in a subsequent 
+request after you've received a response where the results are truncated. 
+Set it to the value of the Marker element in the response you just received.
+
+=item MaxItems (optional)
+
+Use this parameter only when paginating results to indicate the maximum number 
+of VirtualMFADevices you want in the response. If there are additional devices beyond the maximum 
+you specify, the IsTruncated response element is true. This parameter is optional. 
+If you do not include it, it defaults to 100.
+
+=item AssignmentStatus (optional)
+
+The status (unassigned or assigned) of the devices to list. 
+If you do not specify an AssignmentStatus, the action defaults to Any 
+which lists both assigned and unassigned virtual MFA devices.
+
+Valid Values: Assigned | Unassigned | Any
+
+=back
+
+Returns Net::Amazon::IAM::MFADevices object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub list_virtual_MFA_devices {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      AssignmentStatus => { regex => qr/Assigned|Unassigned|Any/, optional => 1 },
+      Marker           => { type => SCALAR, optional => 1 },
+      MaxItems         => { type => SCALAR, optional => 1 },
+   }); 
+
+   my $xml = $self->_sign(Action => 'ListVirtualMFADevices', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      my $devices;
+
+      my %result = %{$xml->{'ListVirtualMFADevicesResult'}};
+
+      if ( grep { defined && length } $result{'MFADevices'} ) {
+         if(ref($result{'VirtualMFADevices'}{'member'}) eq 'ARRAY') {
+            for my $device(@{$result{'VirtualMFADevices'}{'member'}}) {
+               my $d = Net::Amazon::IAM::MFADevice->new(
+                  $device,
+               );
+               push @$devices, $d;
+            }
+         }else{
+            my $d = Net::Amazon::IAM::MFADevice->new(
+               $result{'VirtualMFADevices'}{'member'},
+            );
+            push @$devices, $d;
+         }
+      }else{
+         $devices = [];
+      }
+
+      return Net::Amazon::IAM::MFADevices->new(
+         MFADevices  => $devices,
+         Marker      => $xml->{'ListVirtualMFADevicesResult'}{'Marker'},
+         IsTruncated => $xml->{'ListVirtualMFADevicesResult'}{'IsTruncated'},
+      );
    }
 }
 
