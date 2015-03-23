@@ -1635,13 +1635,13 @@ sub list_virtual_MFA_devices {
       if ( grep { defined && length } $result{'MFADevices'} ) {
          if(ref($result{'VirtualMFADevices'}{'member'}) eq 'ARRAY') {
             for my $device(@{$result{'VirtualMFADevices'}{'member'}}) {
-               my $d = Net::Amazon::IAM::MFADevice->new(
+               my $d = Net::Amazon::IAM::VirtualMFADevice->new(
                   $device,
                );
                push @$devices, $d;
             }
          }else{
-            my $d = Net::Amazon::IAM::MFADevice->new(
+            my $d = Net::Amazon::IAM::VirtualMFADevice->new(
                $result{'VirtualMFADevices'}{'member'},
             );
             push @$devices, $d;
@@ -1650,10 +1650,10 @@ sub list_virtual_MFA_devices {
          $devices = [];
       }
 
-      return Net::Amazon::IAM::MFADevices->new(
-         MFADevices  => $devices,
-         Marker      => $xml->{'ListVirtualMFADevicesResult'}{'Marker'},
-         IsTruncated => $xml->{'ListVirtualMFADevicesResult'}{'IsTruncated'},
+      return Net::Amazon::IAM::VirtualMFADevices->new(
+         VirtualMFADevices  => $devices,
+         Marker             => $xml->{'ListVirtualMFADevicesResult'}{'Marker'},
+         IsTruncated        => $xml->{'ListVirtualMFADevicesResult'}{'IsTruncated'},
       );
    }
 }
