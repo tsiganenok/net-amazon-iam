@@ -2,10 +2,31 @@ package Net::Amazon::IAM::AccessKey;
 use Moose;
 extends 'Net::Amazon::IAM::AccessKeyMetadata';
 
+=head1 NAME
+
+Net::Amazon::IAM::AccessKey 
+
+=head1 DESCRIPTION
+
+A class representing a IAM AccessKey
+This class extends Net::Amazon::IAM::AccessKeyMetadata
+
+=head1 ATTRIBUTES
+
+=over
+
+=item SecretAccessKey (required)
+
+The secret key used to sign requests.
+
+=back
+
+=cut
+
 has 'SecretAccessKey' => (
    is       => 'ro',
    isa      => 'Str',
-   required => 0,
+   required => 1,
 );
 
 __PACKAGE__->meta->make_immutable();
