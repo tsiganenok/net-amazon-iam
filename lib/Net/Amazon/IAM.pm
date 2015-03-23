@@ -26,6 +26,7 @@ use Net::Amazon::IAM::AccessKey;
 use Net::Amazon::IAM::AccessKeyMetadata;
 use Net::Amazon::IAM::AccessKeysList;
 use Net::Amazon::IAM::Role;
+use Net::Amazon::IAM::Roles;
 
 our $VERSION = '0.03';
 
