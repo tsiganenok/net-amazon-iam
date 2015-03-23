@@ -1323,6 +1323,40 @@ sub create_role {
    }
 }
 
+=head2 get_role(%params)
+
+Retrieves information about the specified role.
+
+=over
+
+=item RoleName (required)
+
+The name of the role to get information about.
+
+=back
+
+Returns Net::Amazon::IAM::Role object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub get_role {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      RoleName => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'GetRole', %args);
+
+   if( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   }else{
+      return Net::Amazon::IAM::Role->new(
+         $xml->{'GetRoleResult'}{'Role'},
+      );
+   }
+}
+
 no Moose;
 1;
 
