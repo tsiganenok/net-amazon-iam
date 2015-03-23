@@ -60,7 +60,7 @@ IAM Query API version: '2010-05-08'
    print "User was successfuly deleted\n";
  }
 
- # add policy to user
+ # prepare user policy document
  my $policy_document = {
    Version => '2012-10-17',
    Statement => [
@@ -76,13 +76,14 @@ IAM Query API version: '2010-05-08'
          ],
       },
    ],
-};
+ };
 
-my $policy = $iam->put_user_policy (
-   PolicyName     => 'somtestpolicy',
-   UserName       => 'sometestuser',
-   PolicyDocument => $policy_document,
-);
+ # attach the document to the user
+ my $policy = $iam->put_user_policy (
+    PolicyName     => 'somtestpolicy',
+    UserName       => 'sometestuser',
+    PolicyDocument => $policy_document,
+ );
 
  if($policy->isa("Net::Amazon::IAM::Error")) {
    print Dumper $policy;
