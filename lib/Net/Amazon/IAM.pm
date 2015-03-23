@@ -21,6 +21,7 @@ use Net::Amazon::IAM::Policy;
 use Net::Amazon::IAM::Policies;
 use Net::Amazon::IAM::UserPolicy;
 use Net::Amazon::IAM::Group;
+use Net::Amazon::IAM::GetGroupResult;
 use Net::Amazon::IAM::AccessKey;
 use Net::Amazon::IAM::AccessKeyMetadata;
 use Net::Amazon::IAM::AccessKeysList;
@@ -612,11 +613,22 @@ Returns group details and list of users that are in the specified group.
 
 The name of the group.
 
+=item MaxItems (optional)
+
+Use this only when paginating results to indicate the maximum number of 
+groups you want in the response. If there are additional groups beyond the 
+maximum you specify, the IsTruncated response element is true. This parameter is optional. 
+If you do not include it, it defaults to 100.
+
+=item Marker (optional)
+
+Use this only when paginating results, and only in a subsequent request 
+after you've received a response where the results are truncated. 
+Set it to the value of the Marker element in the response you just received.
+
 =back
 
-Returns Net::Amazon::IAM::Group object on success or Net::Amazon::IAM::Error on fail.
-If there one or more users in specified group, Net::Amazon::IAM::Group object
-will containt Users attribute wich is ArrayRef of Net::Amazon::IAM::User objects
+Returns Net::Amazon::IAM::GetGroupResult object on success or Net::Amazon::IAM::Error on fail.
 
 =cut
 
@@ -637,17 +649,30 @@ sub get_group {
       my %result = %{$xml->{'GetGroupResult'}};
 
       my $users;
-      for my $user ( @{$result{'Users'}{'member'}} ) {
+      if(ref($result{'Users'}{'member'}) eq 'ARRAY') {
+         for my $user ( @{$result{'Users'}{'member'}} ) {
+            my $u = Net::Amazon::IAM::User->new(
+               $user,
+            );
+            push @$users, $u;
+         }
+      }else{
          my $u = Net::Amazon::IAM::User->new(
-            $user,
+            $result{'Users'}{'member'},
          );
+         
          push @$users, $u;
       }
 
-      return Net::Amazon::IAM::Group->new(
-         IsTruncated => $result{'IsTruncated'},
-         Users       => $users,
+      my $group = Net::Amazon::IAM::Group->new(
          %{$result{'Group'}},
+      );
+
+      return Net::Amazon::IAM::GetGroupResult->new(
+         IsTruncated => $result{'IsTruncated'},
+         Marker      => $result{'Marker'},
+         Users       => $users,
+         Group       => $group,
       );
    }
 }
@@ -1245,6 +1270,8 @@ no Moose;
 * missing some ( a lot of ) methods
 
 * missing tests
+
+* list_user_policies returns just an ArrayRef.
 
 =head1 AUTHOR
 
