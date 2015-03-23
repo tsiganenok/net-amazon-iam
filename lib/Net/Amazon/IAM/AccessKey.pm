@@ -1,34 +1,11 @@
 package Net::Amazon::IAM::AccessKey;
 use Moose;
-
-has 'AccessKeyId' => (
-   is       => 'ro',
-   isa      => 'Str',
-   required => 1,
-);
-
-has 'CreateDate' => (
-   is       => 'ro',
-   isa      => 'Str',
-   required => 0,
-);
+extends 'Net::Amazon::IAM::AccessKeyMetadata';
 
 has 'SecretAccessKey' => (
    is       => 'ro',
    isa      => 'Str',
    required => 0,
-);
-
-has 'Status' => (
-   is       => 'ro',
-   isa      => 'Str',
-   required => 0,
-);
-
-has 'UserName' => (
-   is       => 'ro',
-   isa      => 'Str',
-   required => 1,
 );
 
 __PACKAGE__->meta->make_immutable();
