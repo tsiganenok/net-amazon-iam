@@ -27,6 +27,7 @@ use Net::Amazon::IAM::AccessKeyMetadata;
 use Net::Amazon::IAM::AccessKeysList;
 use Net::Amazon::IAM::Role;
 use Net::Amazon::IAM::Roles;
+use Net::Amazon::IAM::VirtualMFADevice;
 
 our $VERSION = '0.03';
 
