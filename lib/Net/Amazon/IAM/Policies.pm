@@ -17,6 +17,17 @@ A class representing a IAM Policies list.
    
 List of Net::Amazon::IAM::Policy objects.
 
+=item IsTruncated (optional)
+   
+A flag that indicates whether there are more policies to list. 
+If your results were truncated, you can make a subsequent pagination 
+request using the Marker request parameter to retrieve more policies in the list.
+
+=item Marker (optional)
+   
+If IsTruncated is true, this element is present and contains the value to use for the 
+Marker parameter in a subsequent pagination request.
+
 =back
 
 =cut
@@ -24,6 +35,18 @@ List of Net::Amazon::IAM::Policy objects.
 has 'Policies' => (
    is       => 'ro',
    isa      => 'Maybe[ArrayRef[Net::Amazon::IAM::Policy]]',
+   required => 0,
+);
+
+has 'IsTruncated' => (
+   is       => 'ro',
+   isa      => 'Str',
+   required => 0,
+);
+
+has 'Marker' => (
+   is       => 'ro',
+   isa      => 'Maybe[Str]',
    required => 0,
 );
 

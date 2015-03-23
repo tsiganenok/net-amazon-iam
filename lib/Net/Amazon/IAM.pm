@@ -834,6 +834,31 @@ To list only AWS managed policies, set Scope to AWS.
 To list only the customer managed policies in your AWS account, set Scope to Local.
 If it is not included, or if it is set to All, all policies are returned.
 
+=item MaxItems (optional)
+
+Maximum number of policies to retrieve.
+
+=item Marker (optional)
+
+If IsTruncated is true, this element is present and contains the value to use for the 
+Marker parameter in a subsequent pagination request.
+
+Example: 
+ my $policies = $iam->list_policies(
+    MaxItems => 1
+ );
+
+ while($policies->IsTruncated eq 'true') {
+    for my $policy(@{$policies->{'Policies'}}) {
+       print $policy->PolicyId . "\n";
+    }
+
+    $policies = $iam->list_policies(
+       MaxItems => 50,
+       Marker   => $policies->Marker,
+    );
+ }
+
 =back
 
 Returns Net::Amazon::IAM::Policies on success or Net::Amazon::IAM::Error on fail.
@@ -881,7 +906,9 @@ sub list_policies {
       }
 
       return Net::Amazon::IAM::Policies->new(
-         Policies => $policies,
+         Policies    => $policies,
+         IsTruncated => $xml->{'ListPoliciesResult'}{'IsTruncated'},
+         Marker      => $xml->{'ListPoliciesResult'}{'Marker'},
       );
    }
 }
