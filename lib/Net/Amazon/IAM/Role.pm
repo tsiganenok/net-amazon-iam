@@ -19,8 +19,8 @@ The Amazon Resource Name (ARN) specifying the role.
 
 =item AssumeRolePolicyDocument (optional)
 
-The policy that grants an entity permission to assume the role.
-The returned policy is URL-encoded according to RFC 3986.
+The policy that grants an entity permission to assume the role
+Will be decoded to Hash from json.
 
 =item CreateDate (required)
 

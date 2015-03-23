@@ -1352,8 +1352,96 @@ sub get_role {
    if( grep { defined && length } $xml->{'Error'} ) {
       return $self->_parse_errors($xml);
    }else{
-      return Net::Amazon::IAM::Role->new(
+      my $role = Net::Amazon::IAM::Role->new(
          $xml->{'GetRoleResult'}{'Role'},
+      );
+
+      $role->{'AssumeRolePolicyDocument'} = decode_json(
+         URI::Encode->new()->decode($role->AssumeRolePolicyDocument)
+      );
+
+      return $role;
+   }
+}
+
+=head2 list_roles(%params)
+
+Retrieves information about the specified role.
+
+=over
+
+=item Marker (required)
+
+Use this parameter only when paginating results, and only in a subsequent 
+request after you've received a response where the results are truncated. 
+Set it to the value of the Marker element in the response you just received.
+
+=item MaxItems (required)
+
+Use this parameter only when paginating results to indicate the maximum number 
+of roles you want in the response. If there are additional roles beyond the maximum 
+you specify, the IsTruncated response element is true. This parameter is optional. 
+If you do not include it, it defaults to 100.
+
+=item PathPrefix (required)
+
+The path prefix for filtering the results. For example, the prefix /application_abc/component_xyz/ 
+gets all roles whose path starts with /application_abc/component_xyz/.
+
+This parameter is optional. If it is not included, it defaults to a slash (/), listing all roles.
+
+=back
+
+Returns Net::Amazon::IAM::Roles object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub list_roles {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      Marker     => { type => SCALAR, optional => 1 },
+      MaxItems   => { type => SCALAR, optional => 1 },
+      PathPrefix => { type => SCALAR, optional => 1 },
+   });
+
+   my $xml = $self->_sign(Action => 'ListRoles', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      my $roles;
+
+      my %result = %{$xml->{'ListRolesResult'}};
+
+      if ( grep { defined && length } $result{'Roles'} ) {
+         if(ref($result{'Roles'}{'member'}) eq 'ARRAY') {
+            for my $role(@{$result{'Roles'}{'member'}}) {
+               my $r = Net::Amazon::IAM::Role->new(
+                  $role,
+               );
+               $r->{'AssumeRolePolicyDocument'} = decode_json(
+                  URI::Encode->new()->decode($r->AssumeRolePolicyDocument)
+               );
+               push @$roles, $r;
+            }
+         }else{
+            my $r = Net::Amazon::IAM::Role->new(
+               $result{'Roles'}{'member'},
+            );
+            $r->{'AssumeRolePolicyDocument'} = decode_json(
+               URI::Encode->new()->decode($r->AssumeRolePolicyDocument)
+            );
+            push @$roles, $r;
+         }
+      }else{
+         $roles = [];
+      }
+
+      return Net::Amazon::IAM::Roles->new(
+         Roles       => $roles,
+         Marker      => $xml->{'ListRolesResult'}{'Marker'},
+         IsTruncated => $xml->{'ListRolesResult'}{'IsTruncated'},
       );
    }
 }
