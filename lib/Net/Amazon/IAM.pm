@@ -1486,6 +1486,56 @@ sub delete_role {
    }
 }
 
+=head2 create_virtual_MFA_device(%params)
+
+Creates a new virtual MFA device for the AWS account. 
+After creating the virtual MFA, use EnableMFADevice to 
+attach the MFA device to an IAM user. 
+
+B<Important>
+The seed information contained in the QR code and the Base32 string 
+should be treated like any other secret access information, such as 
+your AWS access keys or your passwords. After you provision your virtual 
+device, you should ensure that the information is destroyed following 
+secure procedures.
+
+=over
+
+=item VirtualMFADeviceName (required)
+
+The name of the virtual MFA device. Use with path to uniquely identify a virtual MFA device.
+
+=item Path (required)
+
+The path for the virtual MFA device.
+
+=back
+
+Returns Net::Amazon::IAM::VirtualMFADevice object on success or Net::Amazon::IAM::Error on fail.
+
+B<This method wasn't tested>
+
+=cut
+
+sub create_virtual_MFA_device {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      VirtualMFADeviceName => { type => SCALAR },
+      Path                 => { type => SCALAR, optional => 1 },
+   });
+
+   my $xml = $self->_sign(Action => 'CreateVirtualMFADevice', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return Net::Amazon::IAM::VirtualMFADevice->new(
+         $xml->{'CreateVirtualMFADeviceResult'}{'VirtualMFADevice'},
+      );
+   }
+}
+
 no Moose;
 1;
 
