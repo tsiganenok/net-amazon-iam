@@ -1827,6 +1827,209 @@ sub list_MFA_devices {
    }
 }
 
+sub create_instance_profile {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      InstanceProfileName => { type => SCALAR },
+      Path                => { type => SCALAR, optional => 1 },
+   });
+
+   my $xml = $self->_sign(Action => 'CreateInstanceProfile', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return Net::Amazon::IAM::InstanceProfile->new(
+         $xml->{'CreateInstanceProfileResult'}{'InstanceProfile'},
+      );
+   }
+}
+
+sub get_instance_profile {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      InstanceProfileName => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'GetInstanceProfile', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return Net::Amazon::IAM::InstanceProfile->new(
+         $xml->{'GetInstanceProfileResult'}{'InstanceProfile'},
+      );
+   }
+}
+
+sub list_instance_profiles {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      Marker     => { type => SCALAR, optional => 1 },
+      MaxItems   => { type => SCALAR, optional => 1 },
+      PathPrefix => { type => SCALAR, optional => 1 },
+   });
+
+   my $xml = $self->_sign(Action => 'ListInstanceProfiles', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      my $profiles;
+
+      my %result = %{$xml->{'ListInstanceProfilesResult'}};
+
+      if ( grep { defined && length } $result{'InstanceProfiles'} ) {
+         if(ref($result{'InstanceProfiles'}{'member'}) eq 'ARRAY') {
+            for my $profile(@{$result{'InstanceProfiles'}{'member'}}) {
+
+               my $roles = $profile->{'Roles'};
+               my $roles_array;
+
+               if ( grep { defined && length } $roles->{'member'} ) {
+                  if( ref($roles->{'member'}) eq 'ARRAY' ) {
+                     for my $role(@{$roles->{'member'}}) {
+                        my $r = Net::Amazon::IAM::Role->new(
+                           $role,
+                        );
+                        push @$roles_array, $r;
+                     }
+                  }else{
+                     my $r = Net::Amazon::IAM::Role->new(
+                        $roles->{'member'},
+                     );
+                     push @$roles_array, $r;
+                  }
+               }else{
+                  $roles_array = [];
+               }
+
+               my $roles_object = Net::Amazon::IAM::Roles->new(
+                  Roles       => $roles_array,
+                  IsTruncated => 'false',
+                  Marker      => undef,
+               );
+
+               my $p = Net::Amazon::IAM::InstanceProfile->new(
+                  Roles               => $roles_object,
+                  Path                => $profile->{'Path'},
+                  InstanceProfileName => $profile->{'InstanceProfileName'},
+                  InstanceProfileId   => $profile->{'InstanceProfileId'},
+                  CreateDate          => $profile->{'CreateDate'},
+                  Arn                 => $profile->{'Arn'},
+               );
+
+               push @$profiles, $p;
+            }
+         }else{
+            my $profile = $result{'InstanceProfiles'}{'member'};
+            my $roles = $result{'InstanceProfiles'}{'member'}{'Roles'};
+            my $roles_array;
+
+            if ( grep { defined && length } $roles->{'member'} ) {
+               if( ref($roles->{'member'}) eq 'ARRAY' ) {
+                  for my $role(@{$roles->{'member'}}) {
+                     my $r = Net::Amazon::IAM::Role->new(
+                        $role,
+                     );
+                     push @$roles_array, $r;
+                  }
+               }else{
+                  my $r = Net::Amazon::IAM::Role->new(
+                     $roles->{'member'},
+                  );
+                  push @$roles_array, $r;
+               }
+            }else{
+               $roles_array = [];
+            }
+
+            my $roles_object = Net::Amazon::IAM::Roles->new(
+               Roles       => $roles_array,
+               IsTruncated => 'false',
+               Marker      => undef,
+            );
+
+            my $p = Net::Amazon::IAM::InstanceProfile->new(
+               Roles               => $roles_object,
+               Path                => $profile->{'Path'},
+               InstanceProfileName => $profile->{'InstanceProfileName'},
+               InstanceProfileId   => $profile->{'InstanceProfileId'},
+               CreateDate          => $profile->{'CreateDate'},
+               Arn                 => $profile->{'Arn'},
+            );
+
+            push @$profiles, $p;
+         }
+      }else{
+         $profiles = [];
+      }
+
+      return Net::Amazon::IAM::InstanceProfiles->new(
+         InstanceProfiles  => $profiles,
+         Marker            => $xml->{'ListInstanceProfilesResult'}{'Marker'},
+         IsTruncated       => $xml->{'ListInstanceProfilesResult'}{'IsTruncated'},
+      );
+   }
+}
+
+sub delete_instance_profile {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      InstanceProfileName => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'DeleteInstanceProfile', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
+}
+
+sub add_role_to_instance_profile {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      InstanceProfileName => { type => SCALAR },
+      RoleName            => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'AddRoleToInstanceProfile', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
+}
+
+sub remove_role_from_instance_profile {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      InstanceProfileName => { type => SCALAR },
+      RoleName            => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'RemoveRoleFromInstanceProfile', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
+}
+
+sub list_instance_profiles_for_role {
+   
+}
+
 no Moose;
 1;
 
@@ -1841,6 +2044,8 @@ no Moose;
 * missing tests
 
 * list_user_policies returns just an ArrayRef.
+
+* list_instance_profiles looks really bad :( .
 
 =head1 AUTHOR
 
