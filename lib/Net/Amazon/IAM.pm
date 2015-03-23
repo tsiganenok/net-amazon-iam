@@ -1209,6 +1209,16 @@ sub list_access_keys {
 no Moose;
 1;
 
+=head1 KNOWN ISSUES
+
+* Net::Amazon::IAM::Error not thrown, just returned for now.
+
+* methods allowing trancating results not ready for this.
+
+* missing some ( a lot of ) methods
+
+* missing tests
+
 =head1 AUTHOR
 
 Igor Tsigankov <tsiganenok@gmail.com>
