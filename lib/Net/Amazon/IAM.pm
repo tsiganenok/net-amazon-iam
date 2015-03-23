@@ -1712,7 +1712,7 @@ sub enable_MFA_device {
    }
 }
 
-=head2 enable_MFA_device(%params)
+=head2 deactivate_MFA_device(%params)
 
 Enables the specified MFA device and associates it with the specified user name. 
 When enabled, the MFA device is required for every subsequent login by the user 
