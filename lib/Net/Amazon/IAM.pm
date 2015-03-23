@@ -1630,6 +1630,48 @@ sub enable_MFA_device {
    }
 }
 
+=head2 enable_MFA_device(%params)
+
+Enables the specified MFA device and associates it with the specified user name. 
+When enabled, the MFA device is required for every subsequent login by the user 
+name associated with the device.
+
+=over
+
+=item SerialNumber (required)
+
+The serial number that uniquely identifies the MFA device. 
+For virtual MFA devices, the serial number is the device ARN.
+
+=item UserName (required)
+
+The name of the user whose MFA device you want to deactivate.
+
+=back
+
+Returns true on success or Net::Amazon::IAM::Error on fail.
+
+B<This method wasn't tested>
+
+=cut
+
+sub deactivate_MFA_device {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      SerialNumber        => { type => SCALAR },
+      UserName            => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'DeactivateMFADevice', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
+}
+
 no Moose;
 1;
 
