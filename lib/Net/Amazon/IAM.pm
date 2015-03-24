@@ -359,6 +359,34 @@ sub _build_filters {
    }
 }
 
+sub _parse_attributes {
+   my $self          = shift;
+   my $single_object = shift;
+   my $list_objects  = shift;
+   my %result        = @_;
+
+   my $attributes;
+   if ( grep { defined && length } $result{$list_objects}{'member'} ) {
+      if(ref($result{$list_objects}{'member'}) eq 'ARRAY') {
+         for my $attr(@{$result{$list_objects}{'member'}}) {
+            my $a = "Net::Amazon::IAM::$single_object"->new(
+               $attr,
+            );
+            push @$attributes, $a;
+         }
+      }else{
+         my $a = "Net::Amazon::IAM::$single_object"->new(
+            $result{$list_objects}{'member'},
+         );
+         push @$attributes, $a;
+      }
+   }else{
+      $attributes = [];
+   }
+
+   return $attributes;
+}
+
 =head2 create_user(%params)
 
 Create new IAM user
@@ -663,22 +691,7 @@ sub get_group {
       return $self->_parse_errors($xml);
    } else {
       my %result = %{$xml->{'GetGroupResult'}};
-
-      my $users;
-      if(ref($result{'Users'}{'member'}) eq 'ARRAY') {
-         for my $user ( @{$result{'Users'}{'member'}} ) {
-            my $u = Net::Amazon::IAM::User->new(
-               $user,
-            );
-            push @$users, $u;
-         }
-      }else{
-         my $u = Net::Amazon::IAM::User->new(
-            $result{'Users'}{'member'},
-         );
-         
-         push @$users, $u;
-      }
+      my $users  = $self->_parse_attributes('User', 'Users', %result);
 
       my $group = Net::Amazon::IAM::Group->new(
          %{$result{'Group'}},
@@ -924,32 +937,12 @@ sub list_policies {
       return $self->_parse_errors($xml);
    } else {
       my %result = %{$xml->{'ListPoliciesResult'}};
-      my $policies;
-
-      if ( grep { defined && length } $result{'Policies'} ) {
-         if(ref($result{'Policies'}{'member'}) eq 'ARRAY') {
-            for my $policy(@{$result{'Policies'}{'member'}}) {
-               my $p = Net::Amazon::IAM::Policy->new(
-                  $policy,
-               );
-
-               push @$policies, $p;
-            }
-         }else{
-            my $p = Net::Amazon::IAM::Policy->new(
-               $result{'Policies'}{'member'},
-            );
-
-            push @$policies, $p;
-         }
-      }else{
-         $policies = [];
-      }
+      my $policies = $self->_parse_attributes('Policy', 'Policies', %result);
 
       return Net::Amazon::IAM::Policies->new(
          Policies    => $policies,
-         IsTruncated => $xml->{'ListPoliciesResult'}{'IsTruncated'},
-         Marker      => $xml->{'ListPoliciesResult'}{'Marker'},
+         IsTruncated => $result{'IsTruncated'},
+         Marker      => $result{'Marker'},
       );
    }
 }
@@ -1248,26 +1241,7 @@ sub list_access_keys {
       return $self->_parse_errors($xml);
    } else {
       my %result = %{$xml->{'ListAccessKeysResult'}};
-      my $keys;
-
-      if ( grep { defined && length } $result{'AccessKeyMetadata'} ) {
-
-         if(ref($result{'AccessKeyMetadata'}{'member'}) eq 'ARRAY') {
-            for my $key ( @{$result{'AccessKeyMetadata'}{'member'}} ) {
-               my $k = Net::Amazon::IAM::AccessKeyMetadata->new(
-                  $key,
-               );
-               push @$keys, $k;
-            }
-         }else{
-            my $k = Net::Amazon::IAM::AccessKeyMetadata->new(
-               $result{'AccessKeyMetadata'}{'member'},
-            );
-            push @$keys, $k;
-         }
-      }else{
-         $keys = [];
-      }
+      my $keys   = $self->_parse_attributes('AccessKeyMetadata', 'AccessKeyMetadata', %result);
 
       return Net::Amazon::IAM::AccessKeysList->new(
          Keys => $keys,
@@ -1419,38 +1393,13 @@ sub list_roles {
    if ( grep { defined && length } $xml->{'Error'} ) {
       return $self->_parse_errors($xml);
    } else {
-      my $roles;
-
       my %result = %{$xml->{'ListRolesResult'}};
-
-      if ( grep { defined && length } $result{'Roles'} ) {
-         if(ref($result{'Roles'}{'member'}) eq 'ARRAY') {
-            for my $role(@{$result{'Roles'}{'member'}}) {
-               my $r = Net::Amazon::IAM::Role->new(
-                  $role,
-               );
-               $r->{'AssumeRolePolicyDocument'} = decode_json(
-                  URI::Encode->new()->decode($r->AssumeRolePolicyDocument)
-               );
-               push @$roles, $r;
-            }
-         }else{
-            my $r = Net::Amazon::IAM::Role->new(
-               $result{'Roles'}{'member'},
-            );
-            $r->{'AssumeRolePolicyDocument'} = decode_json(
-               URI::Encode->new()->decode($r->AssumeRolePolicyDocument)
-            );
-            push @$roles, $r;
-         }
-      }else{
-         $roles = [];
-      }
+      my $roles  = $self->_parse_attributes('Role', 'Roles', %result);
 
       return Net::Amazon::IAM::Roles->new(
          Roles       => $roles,
-         Marker      => $xml->{'ListRolesResult'}{'Marker'},
-         IsTruncated => $xml->{'ListRolesResult'}{'IsTruncated'},
+         Marker      => $result{'Marker'},
+         IsTruncated => $result{'IsTruncated'},
       );
    }
 }
@@ -1654,8 +1603,8 @@ sub list_virtual_MFA_devices {
 
       return Net::Amazon::IAM::VirtualMFADevices->new(
          VirtualMFADevices  => $devices,
-         Marker             => $xml->{'ListVirtualMFADevicesResult'}{'Marker'},
-         IsTruncated        => $xml->{'ListVirtualMFADevicesResult'}{'IsTruncated'},
+         Marker             => $result{'Marker'},
+         IsTruncated        => $result{'IsTruncated'},
       );
    }
 }
@@ -1821,8 +1770,8 @@ sub list_MFA_devices {
 
       return Net::Amazon::IAM::MFADevices->new(
          MFADevices  => $devices,
-         Marker      => $xml->{'ListMFADevicesResult'}{'Marker'},
-         IsTruncated => $xml->{'ListMFADevicesResult'}{'IsTruncated'},
+         Marker      => $result{'Marker'},
+         IsTruncated => $result{'IsTruncated'},
       );
    }
 }
@@ -1897,38 +1846,20 @@ sub get_instance_profile {
    if ( grep { defined && length } $xml->{'Error'} ) {
       return $self->_parse_errors($xml);
    } else {
-      my %result = %{$xml->{'GetInstanceProfileResult'}{'InstanceProfile'}};
+      my %result    = %{$xml->{'GetInstanceProfileResult'}{'InstanceProfile'}};
+      my $roles     = $self->_parse_attributes('Role', 'Roles', %result);
 
-      my $roles;
-      if ( grep { defined && length } $result{'Roles'}{'member'} ) {
-         if(ref($result{'Roles'}{'member'}) eq 'ARRAY') {
-            for my $role(@{$result{'Roles'}{'member'}}) {
-               my $r = Net::Amazon::IAM::Role->new(
-                  $role,
-               );
-               push @$roles, $r;
-            }
-         }else{
-            my $r = Net::Amazon::IAM::Role->new(
-               $result{'Roles'}{'member'},
-            );
-            push @$roles, $r;
-         }
-      }else{
-         $roles = [];
-      }
-
-      my $roles_object = Net::Amazon::IAM::Roles->new(
+      my $roles_obj = Net::Amazon::IAM::Roles->new(
          Roles => $roles,
       );
 
       return Net::Amazon::IAM::InstanceProfile->new(
-         Arn                 => $xml->{'GetInstanceProfileResult'}{'InstanceProfile'}{'Arn'},
-         CreateDate          => $xml->{'GetInstanceProfileResult'}{'InstanceProfile'}{'CreateDate'},
-         InstanceProfileId   => $xml->{'GetInstanceProfileResult'}{'InstanceProfile'}{'InstanceProfileId'},
-         InstanceProfileName => $xml->{'GetInstanceProfileResult'}{'InstanceProfile'}{'InstanceProfileName'},
-         Path                => $xml->{'GetInstanceProfileResult'}{'InstanceProfile'}{'Path'},
-         Roles               => $roles_object,
+         Arn                 => $result{'Arn'},
+         CreateDate          => $result{'CreateDate'},
+         InstanceProfileId   => $result{'InstanceProfileId'},
+         InstanceProfileName => $result{'InstanceProfileName'},
+         Path                => $result{'Path'},
+         Roles               => $roles_obj,
       );
    }
 }
@@ -1978,100 +1909,25 @@ sub list_instance_profiles {
    if ( grep { defined && length } $xml->{'Error'} ) {
       return $self->_parse_errors($xml);
    } else {
-      my $profiles;
-
       my %result = %{$xml->{'ListInstanceProfilesResult'}};
+      my $instance_profiles = $self->_parse_attributes('InstanceProfile', 'InstanceProfiles', %result);
 
-      if ( grep { defined && length } $result{'InstanceProfiles'} ) {
-         if(ref($result{'InstanceProfiles'}{'member'}) eq 'ARRAY') {
-            for my $profile(@{$result{'InstanceProfiles'}{'member'}}) {
+      for my $profile (@{$instance_profiles}) {
+         my %roles;
+         $roles{'Roles'} = $profile->{'Roles'};
+         my $roles = $self->_parse_attributes('Role', 'Roles', %roles);
 
-               my $roles = $profile->{'Roles'};
-               my $roles_array;
+         my $roles_obj = Net::Amazon::IAM::Roles->new(
+            Roles => $roles,
+         );
 
-               if ( grep { defined && length } $roles->{'member'} ) {
-                  if( ref($roles->{'member'}) eq 'ARRAY' ) {
-                     for my $role(@{$roles->{'member'}}) {
-                        my $r = Net::Amazon::IAM::Role->new(
-                           $role,
-                        );
-                        push @$roles_array, $r;
-                     }
-                  }else{
-                     my $r = Net::Amazon::IAM::Role->new(
-                        $roles->{'member'},
-                     );
-                     push @$roles_array, $r;
-                  }
-               }else{
-                  $roles_array = [];
-               }
-
-               my $roles_object = Net::Amazon::IAM::Roles->new(
-                  Roles       => $roles_array,
-                  IsTruncated => 'false',
-                  Marker      => undef,
-               );
-
-               my $p = Net::Amazon::IAM::InstanceProfile->new(
-                  Roles               => $roles_object,
-                  Path                => $profile->{'Path'},
-                  InstanceProfileName => $profile->{'InstanceProfileName'},
-                  InstanceProfileId   => $profile->{'InstanceProfileId'},
-                  CreateDate          => $profile->{'CreateDate'},
-                  Arn                 => $profile->{'Arn'},
-               );
-
-               push @$profiles, $p;
-            }
-         }else{
-            my $profile = $result{'InstanceProfiles'}{'member'};
-            my $roles = $result{'InstanceProfiles'}{'member'}{'Roles'};
-            my $roles_array;
-
-            if ( grep { defined && length } $roles->{'member'} ) {
-               if( ref($roles->{'member'}) eq 'ARRAY' ) {
-                  for my $role(@{$roles->{'member'}}) {
-                     my $r = Net::Amazon::IAM::Role->new(
-                        $role,
-                     );
-                     push @$roles_array, $r;
-                  }
-               }else{
-                  my $r = Net::Amazon::IAM::Role->new(
-                     $roles->{'member'},
-                  );
-                  push @$roles_array, $r;
-               }
-            }else{
-               $roles_array = [];
-            }
-
-            my $roles_object = Net::Amazon::IAM::Roles->new(
-               Roles       => $roles_array,
-               IsTruncated => 'false',
-               Marker      => undef,
-            );
-
-            my $p = Net::Amazon::IAM::InstanceProfile->new(
-               Roles               => $roles_object,
-               Path                => $profile->{'Path'},
-               InstanceProfileName => $profile->{'InstanceProfileName'},
-               InstanceProfileId   => $profile->{'InstanceProfileId'},
-               CreateDate          => $profile->{'CreateDate'},
-               Arn                 => $profile->{'Arn'},
-            );
-
-            push @$profiles, $p;
-         }
-      }else{
-         $profiles = [];
+         $profile->{'Roles'} = $roles_obj;
       }
 
       return Net::Amazon::IAM::InstanceProfiles->new(
-         InstanceProfiles  => $profiles,
-         Marker            => $xml->{'ListInstanceProfilesResult'}{'Marker'},
-         IsTruncated       => $xml->{'ListInstanceProfilesResult'}{'IsTruncated'},
+         InstanceProfiles  => $instance_profiles,
+         Marker            => $result{'Marker'},
+         IsTruncated       => $result{'IsTruncated'},
       );
    }
 }
@@ -2190,7 +2046,15 @@ sub remove_role_from_instance_profile {
 }
 
 sub list_instance_profiles_for_role {
-   
+   my $self = shift;
+
+   my %args = validate(@_, {
+      Marker   => { type => SCALAR },
+      MaxItems => { type => SCALAR },
+      RoleName => { type => SCALAR },
+   }); 
+
+
 }
 
 no Moose;

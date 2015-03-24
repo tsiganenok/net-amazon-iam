@@ -73,7 +73,7 @@ has 'Path' => (
 
 has 'Roles' => (
    is       => 'ro',
-   isa      => 'Maybe[Net::Amazon::IAM::Roles]',
+   isa      => 'Maybe[Net::Amazon::IAM::Roles]|HashRef',
    required => 1,
 );
 
