@@ -21,6 +21,7 @@ use Net::Amazon::IAM::Policy;
 use Net::Amazon::IAM::Policies;
 use Net::Amazon::IAM::UserPolicy;
 use Net::Amazon::IAM::Group;
+use Net::Amazon::IAM::Groups;
 use Net::Amazon::IAM::GetGroupResult;
 use Net::Amazon::IAM::AccessKey;
 use Net::Amazon::IAM::AccessKeyMetadata;
@@ -735,6 +736,61 @@ sub delete_group {
       return $self->_parse_errors($xml);
    } else {
       return 1;
+   }
+}
+
+=head2 list_groups(%params)
+
+Lists the groups that have the specified path prefix.
+
+=over
+
+=item Marker (optional)
+
+Use this only when paginating results, and only in a subsequent request after 
+you've received a response where the results are truncated. Set it to the value 
+of the Marker element in the response you just received.
+
+=item MaxItems (optional)
+
+Use this only when paginating results to indicate the maximum number of groups 
+you want in the response. If there are additional groups beyond the maximum you specify, 
+the IsTruncated response element is true. This parameter is optional. If you do not include 
+it, it defaults to 100.
+
+=item PathPrefix (optional)
+
+The path prefix for filtering the results. For example, the prefix /division_abc/subdivision_xyz/ 
+gets all groups whose path starts with /division_abc/subdivision_xyz/.
+
+=back
+
+Returns Net::Amazon::IAM::Groups object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub list_groups {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      Marker     => { type => SCALAR, optional => 1 },
+      MaxItems   => { type => SCALAR, optional => 1 },
+      PathPrefix => { type => SCALAR, optional => 1 },
+   });
+
+   my $xml = $self->_sign(Action  => 'ListGroups', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      my %result = %{$xml->{'ListGroupsResult'}};
+      my $groups = $self->_parse_attributes('Group', 'Groups', %result);
+
+      return Net::Amazon::IAM::Groups->new(
+         Groups      => $groups,
+         IsTruncated => $result{'IsTruncated'},
+         Marker      => $result{'Marker'},
+      );
    }
 }
 
