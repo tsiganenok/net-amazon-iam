@@ -1827,6 +1827,28 @@ sub list_MFA_devices {
    }
 }
 
+=head2 create_instance_profile(%params)
+
+Creates a new instance profile.
+
+=over
+
+=item InstanceProfileName (required)
+
+The name of the instance profile to create.
+
+=item Path (optional)
+
+The path to the instance profile.
+
+=back
+
+Returns Net::Amazon::IAM::InstanceProfile object on success or Net::Amazon::IAM::Error on fail.
+The Roles attribute of Net::Amazon::IAM::InstanceProfile object will be undef.
+
+=cut
+
+
 sub create_instance_profile {
    my $self = shift;
 
@@ -1846,6 +1868,23 @@ sub create_instance_profile {
    }
 }
 
+=head2 get_instance_profile(%params)
+
+Retrieves information about the specified instance profile, 
+including the instance profile's path, GUID, ARN, and role.
+
+=over
+
+=item InstanceProfileName (required)
+
+The name of the instance profile to get information about.
+
+=back
+
+Returns Net::Amazon::IAM::InstanceProfile object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
 sub get_instance_profile {
    my $self = shift;
 
@@ -1858,11 +1897,72 @@ sub get_instance_profile {
    if ( grep { defined && length } $xml->{'Error'} ) {
       return $self->_parse_errors($xml);
    } else {
+      my %result = %{$xml->{'GetInstanceProfileResult'}{'InstanceProfile'}};
+
+      my $roles;
+      if ( grep { defined && length } $result{'Roles'}{'member'} ) {
+         if(ref($result{'Roles'}{'member'}) eq 'ARRAY') {
+            for my $role(@{$result{'Roles'}{'member'}}) {
+               my $r = Net::Amazon::IAM::Role->new(
+                  $role,
+               );
+               push @$roles, $r;
+            }
+         }else{
+            my $r = Net::Amazon::IAM::Role->new(
+               $result{'Roles'}{'member'},
+            );
+            push @$roles, $r;
+         }
+      }else{
+         $roles = [];
+      }
+
+      my $roles_object = Net::Amazon::IAM::Roles->new(
+         Roles => $roles,
+      );
+
       return Net::Amazon::IAM::InstanceProfile->new(
-         $xml->{'GetInstanceProfileResult'}{'InstanceProfile'},
+         Arn                 => $xml->{'GetInstanceProfileResult'}{'InstanceProfile'}{'Arn'},
+         CreateDate          => $xml->{'GetInstanceProfileResult'}{'InstanceProfile'}{'CreateDate'},
+         InstanceProfileId   => $xml->{'GetInstanceProfileResult'}{'InstanceProfile'}{'InstanceProfileId'},
+         InstanceProfileName => $xml->{'GetInstanceProfileResult'}{'InstanceProfile'}{'InstanceProfileName'},
+         Path                => $xml->{'GetInstanceProfileResult'}{'InstanceProfile'}{'Path'},
+         Roles               => $roles_object,
       );
    }
 }
+
+=head2 list_instance_profiles(%params)
+
+Lists the instance profiles that have the specified path prefix.
+
+=over
+
+=item Marker (optional)
+
+Use this parameter only when paginating results, and only in a subsequent 
+request after you've received a response where the results are truncated. 
+Set it to the value of the Marker element in the response you just received.
+
+=item MaxItems (optional)
+
+Use this parameter only when paginating results to indicate the maximum number
+of instance profiles you want in the response. If there are additional instance 
+profiles beyond the maximum you specify, the IsTruncated response element is true. 
+This parameter is optional. If you do not include it, it defaults to 100.
+
+=item PathPrefix (optional)
+
+The path prefix for filtering the results. For example, the prefix 
+/application_abc/component_xyz/ gets all instance profiles whose path 
+starts with /application_abc/component_xyz/.
+
+=back
+
+Returns Net::Amazon::IAM::InstanceProfiles object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
 
 sub list_instance_profiles {
    my $self = shift;
@@ -1976,6 +2076,22 @@ sub list_instance_profiles {
    }
 }
 
+=head2 delete_instance_profile(%params)
+
+Deletes the specified instance profile. The instance profile must not have an associated role.
+
+=over
+
+=item InstanceProfileName (required)
+
+The name of the instance profile to delete.
+
+=back
+
+Returns true object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
 sub delete_instance_profile {
    my $self = shift;
 
@@ -1991,6 +2107,26 @@ sub delete_instance_profile {
       return 1;
    }
 }
+
+=head2 add_role_to_instance_profile(%params)
+
+Adds the specified role to the specified instance profile.
+
+=over
+
+=item InstanceProfileName (required)
+
+The name of the instance profile to update.
+
+=item RoleName (required)
+
+The name of the role to add.
+
+=back
+
+Returns true object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
 
 sub add_role_to_instance_profile {
    my $self = shift;
@@ -2008,6 +2144,33 @@ sub add_role_to_instance_profile {
       return 1;
    }
 }
+
+=head2 remove_role_from_instance_profile(%params)
+
+Removes the specified role from the specified instance profile.
+
+B<Important>:
+
+Make sure you do not have any Amazon EC2 instances running with the role 
+you are about to remove from the instance profile. Removing a role from an 
+instance profile that is associated with a running instance will break any 
+applications running on the instance.
+
+=over
+
+=item InstanceProfileName (required)
+
+The name of the instance profile to update.
+
+=item RoleName (required)
+
+The name of the role to remove.
+
+=back
+
+Returns true object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
 
 sub remove_role_from_instance_profile {
    my $self = shift;
