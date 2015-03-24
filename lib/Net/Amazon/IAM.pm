@@ -2045,16 +2045,70 @@ sub remove_role_from_instance_profile {
    }
 }
 
+=head2 list_instance_profiles_for_role(%params)
+
+Lists the instance profiles that have the specified associated role.
+
+=over
+
+=item RoleName (required)
+
+The name of the role to list instance profiles for.
+
+=item MaxItems (optional)
+
+Use this parameter only when paginating results to indicate the maximum number of 
+instance profiles you want in the response. If there are additional instance profiles 
+beyond the maximum you specify, the IsTruncated response element is true. This parameter 
+is optional. If you do not include it, it defaults to 100.
+
+=item Marker (optional)
+
+Use this parameter only when paginating results, and only in a subsequent request 
+after you've received a response where the results are truncated. Set it to the 
+value of the Marker element in the response you just received.
+
+=back
+
+Returns true object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
 sub list_instance_profiles_for_role {
    my $self = shift;
 
    my %args = validate(@_, {
-      Marker   => { type => SCALAR },
-      MaxItems => { type => SCALAR },
       RoleName => { type => SCALAR },
+      Marker   => { type => SCALAR, optional => 1 },
+      MaxItems => { type => SCALAR, optional => 1 },
    }); 
 
+   my $xml = $self->_sign(Action => 'ListInstanceProfilesForRole', %args);
 
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      my %result = %{$xml->{'ListInstanceProfilesForRoleResult'}};
+      my $instance_profiles = $self->_parse_attributes('InstanceProfile', 'InstanceProfiles', %result);
+
+      for my $profile (@{$instance_profiles}) {
+         my %roles;
+         $roles{'Roles'} = $profile->{'Roles'};
+         my $roles = $self->_parse_attributes('Role', 'Roles', %roles);
+
+         my $roles_obj = Net::Amazon::IAM::Roles->new(
+            Roles => $roles,
+         );
+
+         $profile->{'Roles'} = $roles_obj;
+      }
+
+      return Net::Amazon::IAM::InstanceProfiles->new(
+         InstanceProfiles  => $instance_profiles,
+         Marker            => $result{'Marker'},
+         IsTruncated       => $result{'IsTruncated'},
+      );
+   }
 }
 
 no Moose;
