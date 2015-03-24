@@ -17,6 +17,7 @@ use AWS::Signature4;
 use Net::Amazon::IAM::Error;
 use Net::Amazon::IAM::Errors;
 use Net::Amazon::IAM::User;
+use Net::Amazon::IAM::Users;
 use Net::Amazon::IAM::Policy;
 use Net::Amazon::IAM::Policies;
 use Net::Amazon::IAM::UserPolicy;
@@ -532,6 +533,63 @@ sub update_user {
       return $self->_parse_errors($xml);
    } else {
       return 1;
+   }
+}
+
+=head2 list_users(%params)
+
+Lists the IAM users that have the specified path prefix. 
+If no path prefix is specified, the action returns all users in the AWS account. 
+
+=over
+
+=item Marker (required)
+
+Use this parameter only when paginating results, and only in a subsequent request 
+after you've received a response where the results are truncated. Set it to the 
+value of the Marker element in the response you just received.
+
+=item MaxItems (optional)
+
+Use this parameter only when paginating results to indicate the maximum number of 
+user names you want in the response. If there are additional user names beyond the 
+maximum you specify, the IsTruncated response element is true. This parameter is 
+optional. If you do not include it, it defaults to 100.
+
+=item PathPrefix (optional)
+
+The path prefix for filtering the results. For example: 
+/division_abc/subdivision_xyz/, which would get all user 
+names whose path starts with /division_abc/subdivision_xyz/.
+
+=back
+
+Returns Net::Amazon::IAM::Users object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub list_users {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      Marker     => { type => SCALAR, optional => 1 },
+      MaxItems   => { type => SCALAR, optional => 1 },
+      PathPrefix => { type => SCALAR, optional => 1 },
+   });
+
+   my $xml = $self->_sign(Action  => 'ListUsers', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      my %result = %{$xml->{'ListUsersResult'}};
+      my $users  = $self->_parse_attributes('User', 'Users', %result);
+
+      return Net::Amazon::IAM::Users->new(
+         Users       => $users,
+         IsTruncated => $result{'IsTruncated'},
+         Marker      => $result{'Marker'},
+      );
    }
 }
 
