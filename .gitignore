@@ -21,3 +21,4 @@ ignore.txt
 MANIFEST
 MANIFEST.SKIP
 README.md
+*.tar.gz
