@@ -2359,6 +2359,83 @@ sub delete_login_profile {
    }
 }
 
+=head2 get_login_profile(%params)
+
+Retrieves the user name and password-creation date for the specified user. 
+If the user has not been assigned a password, the action returns a 404 (NoSuchEntity) error.
+
+=over
+
+=item UserName (required)
+
+The name of the user whose login profile you want to retrieve.
+
+=back
+
+Returns Net::Amazon::IAM::LoginProfile object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub get_login_profile {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      UserName => { type => SCALAR },
+   }); 
+
+   my $xml = $self->_sign(Action => 'GetLoginProfile', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return Net::Amazon::IAM::LoginProfile->new(
+         $xml->{'GetLoginProfileResult'}{'LoginProfile'},
+      );
+   }
+}
+
+=head2 update_login_profile(%params)
+
+Changes the password for the specified user.
+
+=over
+
+=item UserName (required)
+
+The name of the user whose password you want to update.
+
+=item Password (required)
+
+The new password for the specified user.
+
+=item PasswordResetRequired (optional)
+
+Require the specified user to set a new password on next sign-in.
+
+=back
+
+Returns true on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub update_login_profile {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      UserName              => { type => SCALAR },
+      Password              => { type => SCALAR, optional => 1 },
+      PasswordResetRequired => { type => SCALAR, optional => 1 },
+   }); 
+
+   my $xml = $self->_sign(Action => 'UpdateLoginProfile', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
+}
+
 no Moose;
 1;
 
