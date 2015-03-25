@@ -36,7 +36,7 @@ use Net::Amazon::IAM::MFADevices;
 use Net::Amazon::IAM::InstanceProfile;
 use Net::Amazon::IAM::InstanceProfiles;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 NAME
 
@@ -44,7 +44,7 @@ Net::Amazon::IAM - Perl interface to the Amazon Identity and Access Management.
 
 =head1 VERSION
 
-This is Net::Amazon::IAM version 0.03
+This is Net::Amazon::IAM version 0.04
 
 IAM Query API version: '2010-05-08'
 
