@@ -2230,17 +2230,11 @@ no Moose;
 
 =head1 KNOWN ISSUES
 
-* Net::Amazon::IAM::Error not thrown, just returned for now.
-
-* methods allowing trancating results not ready for this.
-
 * missing some ( a lot of ) methods
 
 * missing tests
 
 * list_user_policies returns just an ArrayRef.
-
-* list_instance_profiles looks really bad :( .
 
 =head1 AUTHOR
 
