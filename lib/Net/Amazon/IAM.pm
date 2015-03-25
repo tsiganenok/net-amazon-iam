@@ -35,6 +35,7 @@ use Net::Amazon::IAM::MFADevice;
 use Net::Amazon::IAM::MFADevices;
 use Net::Amazon::IAM::InstanceProfile;
 use Net::Amazon::IAM::InstanceProfiles;
+use Net::Amazon::IAM::LoginProfile;
 
 our $VERSION = '0.04';
 
@@ -1320,6 +1321,56 @@ sub delete_access_key {
    }
 }
 
+=head2 update_access_key(%params)
+
+Changes the status of the specified access key from Active to Inactive, or vice versa. 
+This action can be used to disable a user's key as part of a key rotation work flow.
+
+If the UserName field is not specified, the UserName is determined implicitly based 
+on the AWS access key ID used to sign the request. Because this action works for access
+keys under the AWS account, you can use this action to manage root credentials even if 
+the AWS account has no associated users.
+
+=over
+
+=item AccessKeyId (required)
+
+The access key ID of the secret access key you want to update.
+
+=item Status (required)
+
+The status you want to assign to the secret access key. 
+Active means the key can be used for API calls to AWS, while Inactive 
+means the key cannot be used.
+
+=item UserName (optional)
+
+The name of the user whose key you want to update.
+
+=back
+
+Returns true on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub update_access_key {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      AccessKeyId => { type => SCALAR },
+      Status      => { regex => qr/Active|Inactive/ },
+      UserName    => { type => SCALAR, optional => 1 },
+   });
+
+   my $xml = $self->_sign(Action => 'UpdateAccessKey', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   } 
+}
+
 =head2 list_access_keys(%params)
 
 Returns information about the access key IDs associated with the specified user.
@@ -2058,7 +2109,7 @@ The name of the instance profile to delete.
 
 =back
 
-Returns true object on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or Net::Amazon::IAM::Error on fail.
 
 =cut
 
@@ -2094,7 +2145,7 @@ The name of the role to add.
 
 =back
 
-Returns true object on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or Net::Amazon::IAM::Error on fail.
 
 =cut
 
@@ -2138,7 +2189,7 @@ The name of the role to remove.
 
 =back
 
-Returns true object on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or Net::Amazon::IAM::Error on fail.
 
 =cut
 
@@ -2184,7 +2235,7 @@ value of the Marker element in the response you just received.
 
 =back
 
-Returns true object on success or Net::Amazon::IAM::Error on fail.
+Returns Net::Amazon::IAM::InstanceProfiles object on success or Net::Amazon::IAM::Error on fail.
 
 =cut
 
@@ -2222,6 +2273,89 @@ sub list_instance_profiles_for_role {
          Marker            => $result{'Marker'},
          IsTruncated       => $result{'IsTruncated'},
       );
+   }
+}
+
+=head2 create_login_profile(%params)
+
+Lists the instance profiles that have the specified associated role.
+
+=over
+
+=item UserName (required)
+
+The name of the user to create a password for.
+
+=item Password (required)
+
+The new password for the user.
+
+=item PasswordResetRequired (optional)
+
+Specifies whether the user is required to set a new password on next sign-in.
+
+=back
+
+Returns Net::Amazon::IAM::LoginProfile object on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub create_login_profile {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      Password              => { type => SCALAR },
+      UserName              => { type => SCALAR },
+      PasswordResetRequired => { type => SCALAR, optional => 1 },
+   }); 
+
+   my $xml = $self->_sign(Action => 'CreateLoginProfile', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return Net::Amazon::IAM::LoginProfile->new(
+         $xml->{'CreateLoginProfileResult'}{'LoginProfile'},
+      );
+   }
+}
+
+=head2 delete_login_profile(%params)
+
+Deletes the password for the specified user, which terminates the user's ability 
+to access AWS services through the AWS Management Console.
+
+B<Important>:
+Deleting a user's password does not prevent a user from accessing IAM through 
+the command line interface or the API. To prevent all user access you must also either 
+make the access key inactive or delete it. For more information about making keys inactive 
+or deleting them, see update_access_key and delete_access_key.
+
+=over
+
+=item UserName (required)
+
+The name of the user whose password you want to delete.
+
+=back
+
+Returns true on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub delete_login_profile {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      UserName => { type => SCALAR },
+   }); 
+
+   my $xml = $self->_sign(Action => 'DeleteLoginProfile', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
    }
 }
 

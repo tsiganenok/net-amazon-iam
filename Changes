@@ -1,5 +1,5 @@
 
-0.04    2015-03-22
+0.04    2015-03-25
         Igor Tsigankov     * Large refactoring 
                            * A lot of new functionality added
                            * Errors changed to be thrown or returned (return_errors attr)
