@@ -2480,6 +2480,43 @@ sub update_login_profile {
    }
 }
 
+=head2 update_assume_role_policy(%params)
+
+Updates the policy that grants an entity permission to assume a role.
+
+=over
+
+=item RoleName (required)
+
+The name of the role to update.
+
+=item PolicyDocument (required)
+
+The policy that grants an entity permission to assume the role.
+
+=back
+
+Returns true on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub update_assume_role_policy {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      RoleName       => { type => SCALAR },
+      PolicyDocument => { type => HASHREF },
+   }); 
+
+   my $xml = $self->_sign(Action => 'UpdateAssumeRolePolicy', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
+}
+
 no Moose;
 1;
 
