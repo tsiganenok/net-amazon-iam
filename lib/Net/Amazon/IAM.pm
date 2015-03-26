@@ -1607,6 +1607,50 @@ sub delete_role {
    }
 }
 
+=head2 put_role_policy(%params)
+
+Adds (or updates) an inline policy document that is embedded in the specified role.
+
+=over
+
+=item PolicyDocument (required)
+
+The policy document.
+
+=item PolicyName (required)
+
+The name of the policy document.
+
+=item RoleName (required)
+
+The name of the role to associate the policy with.
+
+=back
+
+Returns true on success or Net::Amazon::IAM::Error on fail.
+
+=cut
+
+sub put_role_policy {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      PolicyDocument => { type => HASHREF },
+      PolicyName     => { type => SCALAR },
+      RoleName       => { type => SCALAR },
+   });
+
+   $args{'PolicyDocument'} = encode_json delete $args{'PolicyDocument'};
+
+   my $xml = $self->_sign(Action => 'PutRolePolicy', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
+}
+
 =head2 create_virtual_MFA_device(%params)
 
 Creates a new virtual MFA device for the AWS account. 
