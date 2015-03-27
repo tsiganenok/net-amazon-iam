@@ -55,22 +55,9 @@ IAM Query API version: '2010-05-08'
 
  my $iam = Net::Amazon::IAM->new(
    AWSAccessKeyId  => 'PUBLIC_KEY_HERE',
-   SecretAccessKey => 'SECRET_KEY_HERE'
+   SecretAccessKey => 'SECRET_KEY_HERE',
+   return_errors   => 0, # which is default
  );
-
- # create new user
- my $user = $iam->create_user (
-   UserName => 'testuser',
-   Path     => '/path/to/test/user/',
- );
-
- # delete user
- my $delete = $iam->delete_user(UserName => 'testuser');
- if($delete->isa("Net::Amazon::IAM::Error")) {
-   print Dumper $delete;
- }else{
-   print "User was successfuly deleted\n";
- }
 
  # prepare user policy document
  my $policy_document = {
@@ -90,19 +77,26 @@ IAM Query API version: '2010-05-08'
    ],
  };
 
- # attach the document to the user
- my $policy = $iam->put_user_policy (
-    PolicyName     => 'somtestpolicy',
-    UserName       => 'sometestuser',
-    PolicyDocument => $policy_document,
- );
+ try {
+   # create new user
+   my $user = $iam->create_user(
+      UserName => 'testuser',
+      Path     => '/path/to/test/users/',
+   );
+   
+   # Add an inline user policy document.
+   my $policy = $iam->put_user_policy (
+      PolicyName     => 'somtestpolicy',
+      UserName       => 'sometestuser',
+      PolicyDocument => $policy_document,
+   );
 
- if($policy->isa("Net::Amazon::IAM::Error")) {
-   print Dumper $policy;
- }else{
-   print "Policy was added\n";
+   print $user->UserId . "\n";
+   print $policy->PolicyId . "\n";
+ } catch {
+   my $error = shift();
+   print $error->as_string() . "\n";
  }
-
 
 If an error occurs while communicating with IAM, these methods will
 throw a L<Net::Amazon::IAM::Error> exception.
@@ -406,7 +400,7 @@ Where to create new user
 
 =back
 
-Returns a Net::Amazon::IAM::User object on success or Net::Amazon::IAM::Error on fail.
+Returns a L<Net::Amazon::IAM::User> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -441,7 +435,7 @@ What user should be deleted
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -473,7 +467,7 @@ New user username
 
 =back
 
-Returns a Net::Amazon::IAM::User object on success or Net::Amazon::IAM::Error on fail.
+Returns a L<Net::Amazon::IAM::User> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -515,7 +509,7 @@ New name for the user. Include this parameter only if you're changing the user's
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -565,7 +559,7 @@ names whose path starts with /division_abc/subdivision_xyz/.
 
 =back
 
-Returns Net::Amazon::IAM::Users object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::Users> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -610,7 +604,7 @@ The name of the user to add.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -647,7 +641,7 @@ The name of the user to remove.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -684,7 +678,7 @@ The path to the group.
 
 =back
 
-Returns Net::Amazon::IAM::Group object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::Group> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -732,7 +726,7 @@ Set it to the value of the Marker element in the response you just received.
 
 =back
 
-Returns Net::Amazon::IAM::GetGroupResult object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::GetGroupResult> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -778,7 +772,7 @@ The name of the group to delete.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -824,7 +818,7 @@ gets all groups whose path starts with /division_abc/subdivision_xyz/.
 
 =back
 
-Returns Net::Amazon::IAM::Groups object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::Groups> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -877,7 +871,7 @@ The path for the policy.
 
 =back
 
-Returns Net::Amazon::IAM::Policy object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::Policy> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -916,7 +910,7 @@ The Amazon Resource Name (ARN). ARNs are unique identifiers for AWS resources.
 
 =back
 
-Returns Net::Amazon::IAM::Policy object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::Policy> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -950,7 +944,7 @@ The Amazon Resource Name (ARN). ARNs are unique identifiers for AWS resources.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -1030,7 +1024,7 @@ Example:
 
 =back
 
-Returns Net::Amazon::IAM::Policies on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::Policies> on success or L<Net::Amazon::IAM::Error> on fail.
 When no policies found, the Policies attribute will be just empty array.
 
 =cut
@@ -1064,7 +1058,7 @@ sub list_policies {
 
 =head2 put_user_policy(%params)
 
-Deletes the specified managed policy.
+Adds (or updates) an inline policy document that is embedded in the specified user.
 
 =over
 
@@ -1082,7 +1076,7 @@ The name of the user to associate the policy with.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -1122,7 +1116,7 @@ The name of the user who the policy is associated with.
 
 =back
 
-Returns Net::Amazon::IAM::UserPolicy object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::UserPolicy> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -1163,7 +1157,7 @@ The name (friendly name, not ARN) identifying the user that the policy is embedd
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -1197,8 +1191,8 @@ The name of the user to list policies for.
 =back
 
 When found one or more policies, this method will return ArrayRef with policy names.
-Once no policies found, will return undef;
-Net::Amazon::IAM::Error will be returned on error
+Once no policies found, will return undef.
+L<Net::Amazon::IAM::Error> will be returned on error.
 
 =cut
 
@@ -1257,7 +1251,7 @@ The user name that the new key will belong to.
 
 =back
 
-Returns Net::Amazon::IAM::AccessKey object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::AccessKey> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -1300,7 +1294,7 @@ The name of the user whose key you want to delete.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -1349,7 +1343,7 @@ The name of the user whose key you want to update.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -1387,9 +1381,9 @@ The name of the user.
 =back
 
 Returns Net::Amazon::IAM::AccessKeysList on success.
-If specified user has no keys, "Keys" attribute of Net::Amazon::IAM::AccessKeysList object
+If specified user has no keys, "Keys" attribute of L<Net::Amazon::IAM::AccessKeysList> object
 will be just empty array.
-Returns Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -1446,7 +1440,7 @@ The path to the role.
 
 =back
 
-Returns Net::Amazon::IAM::Role object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::Role> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -1484,7 +1478,7 @@ The name of the role to get information about.
 
 =back
 
-Returns Net::Amazon::IAM::Role object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::Role> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -1540,7 +1534,7 @@ This parameter is optional. If it is not included, it defaults to a slash (/), l
 
 =back
 
-Returns Net::Amazon::IAM::Roles object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::Roles> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -1587,7 +1581,7 @@ The name of the role to delete.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -1627,7 +1621,7 @@ The name of the role to associate the policy with.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -1677,7 +1671,7 @@ The path for the virtual MFA device.
 
 =back
 
-Returns Net::Amazon::IAM::VirtualMFADevice object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::VirtualMFADevice> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 B<This method wasn't tested>
 
@@ -1719,7 +1713,7 @@ For virtual MFA devices, the serial number is the same as the ARN.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 B<This method wasn't tested>
 
@@ -1770,7 +1764,7 @@ Valid Values: Assigned | Unassigned | Any
 
 =back
 
-Returns Net::Amazon::IAM::MFADevices object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::MFADevices> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -1845,7 +1839,7 @@ The name of the user for whom you want to enable the MFA device.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 B<This method wasn't tested>
 
@@ -1889,7 +1883,7 @@ The name of the user whose MFA device you want to deactivate.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 B<This method wasn't tested>
 
@@ -1937,7 +1931,7 @@ The name of the user whose MFA devices you want to list.
 
 =back
 
-Returns Net::Amazon::IAM::MFADevices object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::MFADevices> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -2001,8 +1995,7 @@ The path to the instance profile.
 
 =back
 
-Returns Net::Amazon::IAM::InstanceProfile object on success or Net::Amazon::IAM::Error on fail.
-The Roles attribute of Net::Amazon::IAM::InstanceProfile object will be undef.
+Returns L<Net::Amazon::IAM::InstanceProfile> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -2039,7 +2032,7 @@ The name of the instance profile to get information about.
 
 =back
 
-Returns Net::Amazon::IAM::InstanceProfile object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::InstanceProfile> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -2100,7 +2093,7 @@ starts with /application_abc/component_xyz/.
 
 =back
 
-Returns Net::Amazon::IAM::InstanceProfiles object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::InstanceProfiles> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -2153,7 +2146,7 @@ The name of the instance profile to delete.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -2189,7 +2182,7 @@ The name of the role to add.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -2233,7 +2226,7 @@ The name of the role to remove.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -2279,7 +2272,7 @@ value of the Marker element in the response you just received.
 
 =back
 
-Returns Net::Amazon::IAM::InstanceProfiles object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::InstanceProfiles> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -2340,7 +2333,7 @@ Specifies whether the user is required to set a new password on next sign-in.
 
 =back
 
-Returns Net::Amazon::IAM::LoginProfile object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::LoginProfile> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -2383,7 +2376,7 @@ The name of the user whose password you want to delete.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -2416,7 +2409,7 @@ The name of the user whose login profile you want to retrieve.
 
 =back
 
-Returns Net::Amazon::IAM::LoginProfile object on success or Net::Amazon::IAM::Error on fail.
+Returns L<Net::Amazon::IAM::LoginProfile> object on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -2458,7 +2451,7 @@ Require the specified user to set a new password on next sign-in.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -2496,7 +2489,7 @@ The policy that grants an entity permission to assume the role.
 
 =back
 
-Returns true on success or Net::Amazon::IAM::Error on fail.
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
 
 =cut
 
@@ -2529,6 +2522,12 @@ no Moose;
 * missing tests
 
 * list_user_policies returns just an ArrayRef.
+
+=head1 SEE ALSO
+
+=item Amazon IAM API reference
+
+http://docs.aws.amazon.com/IAM/latest/APIReference/Welcome.html
 
 =head1 AUTHOR
 

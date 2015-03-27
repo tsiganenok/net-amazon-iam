@@ -24,7 +24,7 @@ Marker parameter in a subsequent pagination request.
 
 =item Users (optional)
 
-List of Net::Amazon::IAM::Users objects.
+List of L<Net::Amazon::IAM::Users> objects.
 
 =back
 

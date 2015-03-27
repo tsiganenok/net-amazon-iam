@@ -9,7 +9,7 @@ Net::Amazon::IAM::AccessKey
 =head1 DESCRIPTION
 
 A class representing a IAM AccessKey
-This class extends Net::Amazon::IAM::AccessKeyMetadata
+This class extends L<Net::Amazon::IAM::AccessKeyMetadata>
 
 =head1 ATTRIBUTES
 

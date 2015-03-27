@@ -15,7 +15,7 @@ A class representing a IAM Policies list.
 
 =item Policies (optional)
    
-List of Net::Amazon::IAM::Policy objects.
+List of L<Net::Amazon::IAM::Policy> objects.
 
 =item IsTruncated (optional)
    

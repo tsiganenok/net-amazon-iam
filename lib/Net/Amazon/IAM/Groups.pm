@@ -15,7 +15,7 @@ A class representing a IAM Groups list.
 
 =item Groups (optional)
    
-List of Net::Amazon::IAM::Group objects.
+List of L<Net::Amazon::IAM::Group> objects.
 
 =item IsTruncated (optional)
    

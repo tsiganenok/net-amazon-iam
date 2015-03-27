@@ -26,11 +26,11 @@ to use for the Marker parameter in a subsequent pagination request.
 
 =item Users (optional)
 
-Will be list of Net::Amazon::IAM::User.
+Will be list of L<Net::Amazon::IAM::User>.
 
 =item Group (optional)
 
-Will be Net::Amazon::IAM::Group.
+Will be L<Net::Amazon::IAM::Group>.
 
 =back
 

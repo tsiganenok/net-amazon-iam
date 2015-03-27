@@ -15,7 +15,7 @@ A class representing a IAM Access Keys List
 
 =item Keys (required)
 
-Array of Net::Amazon::IAM::AccessKeyMetadata
+Array of L<Net::Amazon::IAM::AccessKeyMetadata>
 
 =back
 

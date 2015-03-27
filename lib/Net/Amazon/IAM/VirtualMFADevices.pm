@@ -15,7 +15,7 @@ A class representing a IAM Virtual MFA Devices list.
 
 =item VirtualMFADevices (optional)
    
-List of Net::Amazon::IAM::VirtualMFADevice objects.
+List of L<Net::Amazon::IAM::VirtualMFADevice> objects.
 
 =item IsTruncated (optional)
    

@@ -19,7 +19,7 @@ The ID of the request associated with this error.
 
 =item errors (required)
 
-An array ref of Net::Amazon::IAM::Error objects associated with this request.
+An array ref of L<Net::Amazon::IAM::Error> objects associated with this request.
 
 =cut
 

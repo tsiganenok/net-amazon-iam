@@ -15,7 +15,7 @@ A class representing a IAM MFADevices list.
 
 =item MFADevices (optional)
    
-List of Net::Amazon::IAM::MFADevice objects.
+List of L<Net::Amazon::IAM::MFADevice> objects.
 
 =item IsTruncated (optional)
    

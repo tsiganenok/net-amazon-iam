@@ -15,7 +15,7 @@ A class representing a IAM Instance Profiles list.
 
 =item Roles (optional)
    
-List of Net::Amazon::IAM::Role objects.
+List of L<Net::Amazon::IAM::Role> objects.
 
 =item IsTruncated (optional)
    

@@ -35,7 +35,7 @@ The path to the instance profile.
 
 =item Roles (required)
 
-List of roles associated with the instance profile represented as Net::Amazon::IAM::Roles.
+List of roles associated with the instance profile represented as L<Net::Amazon::IAM::Roles>.
 
 =back
 
