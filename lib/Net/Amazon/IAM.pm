@@ -2508,6 +2508,8 @@ sub update_assume_role_policy {
       PolicyDocument => { type => HASHREF },
    }); 
 
+   $args{'PolicyDocument'} = encode_json delete $args{'PolicyDocument'};
+   
    my $xml = $self->_sign(Action => 'UpdateAssumeRolePolicy', %args);
 
    if ( grep { defined && length } $xml->{'Error'} ) {
