@@ -1,4 +1,8 @@
 
+0.05    2015-03-29
+        Alexandr Ciornii   * Distribution build fix (rt103150).
+        Igor Tsigankov     * More API provided methods added.
+
 0.04    2015-03-25
         Igor Tsigankov     * Large refactoring 
                            * A lot of new functionality added
