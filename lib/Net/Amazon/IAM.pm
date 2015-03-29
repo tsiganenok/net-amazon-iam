@@ -21,8 +21,11 @@ use Net::Amazon::IAM::Users;
 use Net::Amazon::IAM::Policy;
 use Net::Amazon::IAM::Policies;
 use Net::Amazon::IAM::UserPolicy;
+use Net::Amazon::IAM::PolicyVersion;
+use Net::Amazon::IAM::PolicyVersions;
 use Net::Amazon::IAM::Group;
 use Net::Amazon::IAM::Groups;
+use Net::Amazon::IAM::GroupPolicy;;
 use Net::Amazon::IAM::GetGroupResult;
 use Net::Amazon::IAM::AccessKey;
 use Net::Amazon::IAM::AccessKeyMetadata;
@@ -1053,6 +1056,228 @@ sub list_policies {
          IsTruncated => $result{'IsTruncated'},
          Marker      => $result{'Marker'},
       );
+   }
+}
+
+=head2 get_policy_version(%params)
+
+Retrieves information about the specified version of the specified 
+managed policy, including the policy document.
+
+=over
+
+=item PolicyArn (required)
+
+The Amazon Resource Name (ARN). ARNs are unique identifiers for AWS resources.
+
+=item VersionId (required)
+
+Identifies the policy version to retrieve.
+
+=back
+
+Returns L<Net::Amazon::IAM::PolicyVersion> on success or L<Net::Amazon::IAM::Error> on fail.
+
+=cut
+
+sub get_policy_version {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      PolicyArn => { type => SCALAR },
+      VersionId => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'GetPolicyVersion', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      my %result = %{$xml->{'GetPolicyVersionResult'}{'PolicyVersion'}};
+      $result{'Document'} = decode_json(URI::Encode->new()->decode($result{'Document'}));
+      return Net::Amazon::IAM::PolicyVersion->new(
+         %result,
+      );
+   }
+}
+
+=head2 set_default_policy_version(%params)
+
+Sets the specified version of the specified policy as the policy's default (operative) version.
+
+=over
+
+=item PolicyArn (required)
+
+The Amazon Resource Name (ARN). ARNs are unique identifiers for AWS resources.
+
+=item VersionId (required)
+
+The version of the policy to set as the default (operative) version.
+
+=back
+
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
+
+=cut
+
+sub set_default_policy_version {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      PolicyArn => { type => SCALAR },
+      VersionId => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'SetDefaultPolicyVersion', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
+}
+
+=head2 list_policy_versions(%params)
+
+Lists information about the versions of the specified managed policy, including the 
+version that is set as the policy's default version.
+
+=over
+
+=item PolicyArn (required)
+
+The Amazon Resource Name (ARN). ARNs are unique identifiers for AWS resources.
+
+=item MaxItems (optional)
+
+Use this parameter only when paginating results to indicate the maximum number 
+of policy versions you want in the response.
+
+=item Marker (optional)
+
+Use this parameter only when paginating results, and only in a subsequent request 
+after you've received a response where the results are truncated. Set it to the value 
+of the Marker element in the response you just received.
+
+=back
+
+Returns L<Net::Amazon::IAM::PolicyVersions> on success or L<Net::Amazon::IAM::Error> on fail.
+
+=cut
+
+sub list_policy_versions {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      PolicyArn => { type => SCALAR },
+      MaxItems  => { type => SCALAR, optional => 1 },
+      Marker    => { type => SCALAR, optional => 1 },
+   });
+
+   my $xml = $self->_sign(Action => 'ListPolicyVersions', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      my %result   = %{$xml->{'ListPolicyVersionsResult'}};
+      my $versions = $self->_parse_attributes('PolicyVersion', 'Versions', %result);
+
+      return Net::Amazon::IAM::PolicyVersions->new(
+         Policies => $versions,
+      );
+   }
+}
+
+=head2 create_policy_version(%params)
+
+Creates a new version of the specified managed policy. To update a managed policy, 
+you create a new policy version. A managed policy can have up to five versions. 
+If the policy has five versions, you must delete an existing version using DeletePolicyVersion 
+before you create a new version.
+
+Optionally, you can set the new version as the policy's default version. The default version 
+is the operative version; that is, the version that is in effect for the IAM users, groups, 
+and roles that the policy is attached to.
+
+=over
+
+=item PolicyArn (required)
+
+The Amazon Resource Name (ARN). ARNs are unique identifiers for AWS resources.
+
+=item PolicyDocument (required)
+
+The policy document.
+
+=item SetAsDefault (optional)
+
+Specifies whether to set this version as the policy's default version.
+
+When this parameter is true, the new policy version becomes the operative 
+version; that is, the version that is in effect for the IAM users, groups, 
+and roles that the policy is attached to.
+
+=back
+
+Returns L<Net::Amazon::IAM::PolicyVersion> on success or L<Net::Amazon::IAM::Error> on fail.
+
+=cut
+
+sub create_policy_version {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      PolicyArn      => { type => SCALAR },
+      PolicyDocument => { type => HASHREF },
+      SetAsDefault   => { regex => qr/true|false/s, optional => 1 },
+   });
+
+   $args{'PolicyDocument'} = encode_json delete $args{'PolicyDocument'};
+
+   my $xml = $self->_sign(Action => 'CreatePolicyVersion', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return Net::Amazon::IAM::PolicyVersion->new(
+         $xml->{'CreatePolicyVersionResult'}{'PolicyVersion'},
+      );
+   }
+}
+
+=head2 delete_policy_version(%params)
+
+=over
+
+=item PolicyArn (required)
+
+The Amazon Resource Name (ARN). ARNs are unique identifiers for AWS resources.
+
+=item VersionId (required)
+
+The policy version to delete.
+
+=back
+
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
+
+=cut
+
+sub delete_policy_version {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      PolicyArn => { type => SCALAR },
+      VersionId => { type => SCALAR },
+   });
+
+   my $xml = $self->_sign(Action => 'DeletePolicyVersion', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
    }
 }
 
@@ -2512,6 +2737,214 @@ sub update_assume_role_policy {
    }
 }
 
+=head2 add_client_ID_to_open_ID_connect_provider(%params)
+
+Adds a new client ID (also known as audience) to the list of client IDs already registered for 
+the specified IAM OpenID Connect provider.
+
+This action is idempotent; it does not fail or return an error if you add an existing client 
+ID to the provider.
+
+=over
+
+=item ClientID (required)
+
+The client ID (also known as audience) to add to the IAM OpenID Connect provider.
+
+=item OpenIDConnectProviderArn (required)
+
+The Amazon Resource Name (ARN) of the IAM OpenID Connect (OIDC) provider to add the client ID to.
+
+=back
+
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
+
+B<This method wasn't tested>
+
+=cut
+
+sub add_client_ID_to_open_ID_connect_provider {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      ClientID                 => { type => SCALAR },
+      OpenIDConnectProviderArn => { type => SCALAR },
+   }); 
+
+   my $xml = $self->_sign(Action => 'AddClientIDToOpenIDConnectProvider', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
+}
+
+=head2 create_open_ID_connect_provider(%params)
+
+Creates an IAM entity to describe an identity provider (IdP) that supports OpenID Connect (OIDC).
+
+=over
+
+=item ClientIDList (required)
+
+A list of client IDs (also known as audiences). When a mobile or web app registers with 
+an OpenID Connect provider, they establish a value that identifies the application. 
+(This is the value that's sent as the client_id parameter on OAuth requests.)
+
+You can register multiple client IDs with the same provider. For example, you might have 
+multiple applications that use the same OIDC provider. You cannot register more than 100 
+client IDs with a single IAM OIDC provider.
+
+=item ThumbprintList (required)
+
+A list of server certificate thumbprints for the OpenID Connect (OIDC) identity provider's 
+server certificate(s). Typically this list includes only one entry. However, IAM lets you 
+have up to five thumbprints for an OIDC provider. This lets you maintain multiple thumbprints 
+if the identity provider is rotating certificates.
+
+The server certificate thumbprint is the hex-encoded SHA-1 hash value of the X.509 certificate 
+used by the domain where the OpenID Connect provider makes its keys available. It is always a 
+40-character string.
+
+You must provide at least one thumbprint when creating an IAM OIDC provider. For example, if the 
+OIDC provider is server.example.com and the provider stores its keys at 
+"https://keys.server.example.com/openid-connect", the thumbprint string would be the hex-encoded 
+SHA-1 hash value of the certificate used by https://keys.server.example.com.
+
+=item Url (required)
+
+The URL of the identity provider. The URL must begin with "https://" and should correspond to 
+the iss claim in the provider's OpenID Connect ID tokens. Per the OIDC standard, path components 
+are allowed but query parameters are not. Typically the URL consists of only a host name, like 
+"https://server.example.org" or "https://example.com".
+
+You cannot register the same provider multiple times in a single AWS account. If you try to 
+submit a URL that has already been used for an OpenID Connect provider in the AWS account, 
+you will get an error.
+
+=back
+
+Returns OpenIDConnectProviderArn on success or L<Net::Amazon::IAM::Error> on fail.
+
+B<This method wasn't tested>
+
+=cut
+
+sub create_open_ID_connect_provider {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      ClientIDList   => { type => ARRAYREF, optional => 1 },
+      ThumbprintList => { type => ARRAYREF },
+      Url            => { type => SCALAR },
+   }); 
+
+   my $client_ids_list  = delete $args{'ClientIDList'};
+   my $thumb_print_list = delete $args{'ThumbprintList'};
+
+   my $c_count = 1;
+   for my $id(@{$client_ids_list}) {
+      $args{'ClientIDList.list.' . $c_count} = $id;
+      $c_count++;
+   }
+
+   my $t_count = 1;
+   for my $thumb(@{$thumb_print_list}) {
+      $args{'ThumbprintList.list.' . $t_count} = $thumb;
+      $t_count++;
+   }
+
+   my $xml = $self->_sign(Action => 'CreateOpenIDConnectProvider', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return $xml->{'CreateOpenIDConnectProviderResult'}{'OpenIDConnectProviderArn'}
+   }
+}
+
+=head2 delete_open_ID_connect_provider(%params)
+
+Deletes an IAM OpenID Connect identity provider.
+
+Deleting an OIDC provider does not update any roles that reference the provider as a 
+principal in their trust policies. Any attempt to assume a role that references a 
+provider that has been deleted will fail.
+
+This action is idempotent; it does not fail or return an error if you call the action 
+for a provider that was already deleted.
+
+=over
+
+=item OpenIDConnectProviderArn (required)
+
+The Amazon Resource Name (ARN) of the IAM OpenID Connect provider to delete.
+
+=back
+
+Returns true on success or L<Net::Amazon::IAM::Error> on fail.
+
+B<This method wasn't tested>
+
+=cut
+
+sub delete_open_ID_connect_provider {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      OpenIDConnectProviderArn   => { type => SCALAR },
+   }); 
+
+   my $xml = $self->_sign(Action => 'DeleteOpenIDConnectProvider', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      return 1;
+   }
+}
+
+=head2 get_group_policy(%params)
+
+=over
+
+=item GroupName (required)
+
+The name of the group the policy is associated with.
+
+=item PolicyName (required)
+
+The name of the policy document to get.
+
+=back
+
+Returns L<Net::Amazon::IAM::GroupPolicy> on success or L<Net::Amazon::IAM::Error> on fail.
+
+=cut
+
+sub get_group_policy {
+   my $self = shift;
+
+   my %args = validate(@_, {
+      GroupName  => { type => SCALAR },
+      PolicyName => { type => SCALAR },
+   }); 
+
+   my $xml = $self->_sign(Action => 'GetGroupPolicy', %args);
+
+   if ( grep { defined && length } $xml->{'Error'} ) {
+      return $self->_parse_errors($xml);
+   } else {
+      my %result = ${$xml->{'GetGroupPolicyResult'}};
+      $result{'PolicyDocument'} = decode_json(URI::Encode->new()->decode($result{'PolicyDocument'}));
+
+      return Net::Amazon::IAM::GroupPolicy->new(
+         %result,
+      );
+   }
+}
+
 no Moose;
 1;
 
@@ -2525,9 +2958,13 @@ no Moose;
 
 =head1 SEE ALSO
 
+=over
+
 =item Amazon IAM API reference
 
 http://docs.aws.amazon.com/IAM/latest/APIReference/Welcome.html
+
+=back
 
 =head1 AUTHOR
 
